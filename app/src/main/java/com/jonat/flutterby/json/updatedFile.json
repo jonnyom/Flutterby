@@ -1,0 +1,162 @@
+{
+  "POIList" : {
+    "POI1" : {
+      "genres":{
+        "ids": [1, 4, 5],
+        "types": ["Historical", "Humour", "Political"]
+      },
+      "location" : {
+        ".priority" : "gc1znw8rwn",
+        "g" : "gc1znw8rwn",
+        "l" : [ 51.892494, -8.502814 ]
+      },
+      "stories" : {
+      	"story1" : {
+      		"story":"This is a nice manhole cover",
+      		"genre" : {
+        		"id" : 1,
+        		"type" : "Historical"
+      		}
+      	},
+      	"story2" : {
+      		"story":"Such a nice manhole cover",
+		      "genre" : {
+		        "id" : 4,
+		        "type" : "Humour"
+      		}
+      	},
+      	"story3" : {
+      		"story" : "The nicest Manhole cover",
+      		"genre" : {
+		        "id" : 5,
+		        "type" : "Political"
+		    }
+      	}
+      },
+      "title" : "Manhole Cover"
+    },
+    "POI2" : {
+      "genres":{
+        "ids": [1, 4],
+        "types": ["Historical", "Humour"]
+      },
+      "location" : {
+        ".priority" : "gc1znwbk8p",
+        "g" : "gc1znwbk8p",
+        "l" : [ 51.893361, -8.503071 ]
+      },
+      "stories" : {
+      	"story1":{
+      		"story": "Cromwell himself once sat on this bench giving an amazing speech about how he bested the people of Armagh in a tug of war.",
+      		"genre" : {
+		        "id" : 1,
+		        "type" : "Historical"
+		     }
+		 },
+        "story2":{
+          "story": "This is the second story for POI2",
+          "genre": {
+            "id": 4,
+            "type": "Humour"
+          }
+        },
+        "story3":{
+          "story": "Cromwell and I actually used to get on really well before he turned into such a terrible person",
+          "genre":{
+            "id": 1,
+            "type": "Historical"
+          }
+        }
+  	},
+      "title" : "Cromwell's Bench"
+    },
+    "POI3" : {
+      "genres":{
+        "ids": [1, 2],
+        "types": ["Historical", "Music"]
+      },
+      "location" : {
+        ".priority" : "gc1znx4b6s",
+        "g" : "gc1znx4b6s",
+        "l" : [ 51.89399, -8.49953 ]
+      },
+      "stories" :{
+        "story1": {
+          "story": "There was a fantastic Musical on here in the 15th Century",
+          "genre": {
+            "id": 1,
+            "type": "Historical"
+          }
+        },
+        "story2":{
+          "story": "This is a musical event",
+          "genre":{
+            "id": 2,
+            "type": "Music"
+          }
+        }
+      },
+      "title" : "Music Venue"
+    },
+    "POI4" : {
+      "genres":{
+        "ids": [1, 3, 4],
+        "types": ["Computing", "Historical", "Humour"]
+      },
+      "location" : {
+        ".priority" : "gc1znwfmgh",
+        "g" : "gc1znwfmgh",
+        "l" : [ 51.893561, -8.500198 ]
+      },
+      "stories" : {
+        "story1":{
+          "story": "This is a location in the computer science building of UCC",
+          "genre":{
+            "id": 3,
+            "type": "Computing"
+          }
+        },
+        "story2":{
+          "story": "This building used to be the Greyhound track for Cork",
+          "genre":{
+            "id": 1,
+            "type": "Historical"
+          }
+        },
+        "story3":{
+          "story": "This is going to be such a pain to implement honestly",
+          "genre":{
+            "id": 4,
+            "type": "Humour"
+          }
+        }
+      },
+      "title" : "Compsci PointOfInterest"
+    }
+  },
+  "users" : {
+    "07jW8q3oJVO6PfbyEf61Jepf9L93" : {
+      "interests" : [ null, null, "Music", "Computing" ],
+      "uid" : "07jW8q3oJVO6PfbyEf61Jepf9L93",
+      "username" : "test@testing.test"
+    },
+    "2iZqUzyLa4clojTUY2lq4BCUlMs2" : {
+      "uid" : "2iZqUzyLa4clojTUY2lq4BCUlMs2",
+      "username" : "jonnyom@internet.com"
+    },
+    "7SRdOyIpVmRqeLfyfTHWwo6tBOm2" : {
+      "interests" : [ null, "Historical", "Music", "Computing" ],
+      "uid" : "7SRdOyIpVmRqeLfyfTHWwo6tBOm2",
+      "username" : "jonny@test.ie"
+    },
+    "CLEthqaqUBZfaOYeYaVh2OfgPE52" : {
+      "interests" : [ null, "Historical", "Music", "Computing" ],
+      "uid" : "CLEthqaqUBZfaOYeYaVh2OfgPE52",
+      "username" : "blahblah@blah.ie"
+    },
+    "lTrRbt4WRie3cUokU1iDTflOgC13" : {
+      "interests" : [ null, "Historical" ],
+      "username" : "jonny@jonny.ie"
+    }
+  }
+}
