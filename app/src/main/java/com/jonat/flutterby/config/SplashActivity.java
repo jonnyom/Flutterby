@@ -1,4 +1,4 @@
-package com.jonat.flutterby;
+package com.jonat.flutterby.config;
 
 import android.content.Intent;
 import android.os.Bundle;

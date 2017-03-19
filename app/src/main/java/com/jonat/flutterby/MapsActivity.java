@@ -59,6 +59,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.maps.android.SphericalUtil;
+import com.jonat.flutterby.config.Config;
 import com.jonat.flutterby.poi.POIGenre;
 import com.jonat.flutterby.poi.PointOfInterest;
 import com.jonat.flutterby.poi.Recommender;

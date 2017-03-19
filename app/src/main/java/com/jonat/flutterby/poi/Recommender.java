@@ -3,7 +3,7 @@ package com.jonat.flutterby.poi;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.jonat.flutterby.Config;
+import com.jonat.flutterby.config.Config;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package com.jonat.flutterby;
+package com.jonat.flutterby.config;
 
 /**
  * Created by jonat on 09/11/2016.
