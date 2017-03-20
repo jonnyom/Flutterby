@@ -39,8 +39,6 @@ public class ResetPasswordActivity extends AppCompatActivity {
 
         auth = FirebaseAuth.getInstance();
 
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

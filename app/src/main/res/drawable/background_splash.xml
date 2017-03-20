@@ -6,8 +6,8 @@
 
     <item>
         <bitmap
-            android:gravity="center"
-            android:src="@drawable/flutterby128text"/>
+            android:gravity="center_vertical"
+            android:src="@drawable/flutterby128"/>
     </item>
 
 </layer-list>

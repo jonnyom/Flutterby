@@ -15,7 +15,7 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@drawable/flutterby196text"
+        android:icon="@drawable/flutterby196"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
@@ -53,13 +53,7 @@
             android:parentActivityName=".auth.ProfileActivity"/>
         <activity
             android:name=".auth.ProfileActivity"
-            android:label="Profile">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
+            android:label="Profile" />
         <activity
             android:name=".auth.ResetPasswordActivity"
             android:parentActivityName=".auth.ProfileActivity"/>
