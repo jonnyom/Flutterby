@@ -11,6 +11,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -25,7 +26,8 @@ import com.jonat.flutterby.R;
 public class ProfileActivity extends AppCompatActivity {
 
     private Button btnChangeEmail, btnChangePassword, btnSendResetEmail, btnRemoveUser,
-            changeEmail, changePassword, sendEmail, remove, signOut, btnToMap;
+            changeEmail, changePassword, sendEmail, remove, signOut;
+    ImageButton btnBack;
 
     private EditText oldEmail, newEmail, password, newPassword;
     private ProgressBar progressBar;
@@ -37,8 +39,6 @@ public class ProfileActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setTitle(getString(R.string.app_name));
         FirebaseApp.initializeApp(this);
         //get firebase auth instance
         auth = FirebaseAuth.getInstance();
@@ -59,6 +59,7 @@ public class ProfileActivity extends AppCompatActivity {
             }
         };
 
+        btnBack = (ImageButton) findViewById(R.id.btn_back);
         btnChangeEmail = (Button) findViewById(R.id.change_email_button);
         btnChangePassword = (Button) findViewById(R.id.change_password_button);
         btnSendResetEmail = (Button) findViewById(R.id.sending_pass_reset_button);
@@ -85,11 +86,16 @@ public class ProfileActivity extends AppCompatActivity {
 
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
-        btnToMap = (Button)findViewById(R.id.to_map);
-
         if (progressBar != null) {
             progressBar.setVisibility(View.GONE);
         }
+
+        btnBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
 
         btnChangeEmail.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -102,7 +108,6 @@ public class ProfileActivity extends AppCompatActivity {
                 changePassword.setVisibility(View.GONE);
                 sendEmail.setVisibility(View.GONE);
                 remove.setVisibility(View.GONE);
-                btnToMap.setVisibility(View.GONE);
             }
         });
 
@@ -124,7 +129,6 @@ public class ProfileActivity extends AppCompatActivity {
                                     } else {
                                         Toast.makeText(ProfileActivity.this, "Failed to update email!", Toast.LENGTH_LONG).show();
                                         progressBar.setVisibility(View.GONE);
-                                        btnToMap.setVisibility(View.VISIBLE);
                                     }
                                 }
                             });
@@ -146,7 +150,6 @@ public class ProfileActivity extends AppCompatActivity {
                 changePassword.setVisibility(View.VISIBLE);
                 sendEmail.setVisibility(View.GONE);
                 remove.setVisibility(View.GONE);
-                btnToMap.setVisibility(View.GONE);
             }
         });
 
@@ -170,7 +173,6 @@ public class ProfileActivity extends AppCompatActivity {
                                         } else {
                                             Toast.makeText(ProfileActivity.this, "Failed to update password!", Toast.LENGTH_SHORT).show();
                                             progressBar.setVisibility(View.GONE);
-                                            btnToMap.setVisibility(View.VISIBLE);
                                         }
                                     }
                                 });
@@ -245,14 +247,6 @@ public class ProfileActivity extends AppCompatActivity {
             }
         });
 
-        btnToMap.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(new Intent(ProfileActivity.this, MapsActivity.class));
-                finish();
-            }
-        });
-
         signOut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -304,5 +298,9 @@ public class ProfileActivity extends AppCompatActivity {
         }
 
         return super.onContextItemSelected(item);
+    }
+    @Override
+    public void onBackPressed() {
+        finish();
     }
 }

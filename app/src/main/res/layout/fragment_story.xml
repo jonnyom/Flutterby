@@ -1,55 +1,81 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
              xmlns:app="http://schemas.android.com/apk/res-auto"
              xmlns:tools="http://schemas.android.com/tools"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:foregroundGravity="center"
              android:visibility="visible"
-             tools:context="com.jonat.flutterby.poi.StoryFragment">
+             tools:context="com.jonat.flutterby.MapsActivity"
+    android:layout_gravity="center_vertical">
 
-    <android.support.v7.widget.CardView
-        android:id="@+id/cardView"
-        android:layout_width="294dp"
-        android:layout_height="370dp"
-        android:layout_weight="0.22"
-        app:cardElevation="8dp">
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="500dp"
+        android:background="@android:color/white"
+        android:foregroundGravity="center"
+        android:layout_gravity="center_vertical">
 
-        <ScrollView
-            android:id="@+id/scrollView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fillViewport="false"
-            android:scrollbars="vertical">
+        <ImageView
+            android:id="@+id/poiImageView"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_alignParentStart="true"
+            android:elevation="10dp"
+            android:minHeight="70dp"
+            android:minWidth="100dp"
+            android:layout_alignParentTop="true"/>
 
-            <RelativeLayout
-                    android:layout_width="289dp"
-                    android:layout_height="380dp"
+
+        <android.support.v7.widget.CardView
+            android:id="@+id/cardView"
+            android:layout_width="match_parent"
+            android:layout_height="339dp"
+            android:layout_alignParentStart="true"
+            android:layout_below="@+id/poiImageView"
+            android:layout_marginTop="11dp"
+            android:layout_weight="0.22"
+            app:cardElevation="5dp">
+
+            <ScrollView
+                android:id="@+id/scrollView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fillViewport="false"
+                android:scrollbars="vertical">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="339dp"
                     android:padding="16dp">
 
-                <TextView
-                    android:id="@+id/poiTitleView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentTop="true"
-                    android:textSize="30sp"/>
+                    <ImageButton
+                        android:id="@+id/infoButton"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_alignParentEnd="true"
+                        android:background="@null"
+                        android:src="@drawable/info24"/>
 
-                <TextView
-                    android:id="@+id/poiStoryView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/poiTitleView"
-                    />
+                    <TextView
+                        android:id="@+id/poiTitleView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentTop="true"
+                        android:textSize="30sp"/>
 
-                <ImageButton
-                    android:id="@+id/imageButton2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_alignParentTop="true"
-                    app:srcCompat="@android:drawable/ic_dialog_info"/>
+                    <TextView
+                        android:id="@+id/poiStoryView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/poiTitleView"
+                        />
 
-            </RelativeLayout>
-        </ScrollView>
+                </RelativeLayout>
 
-    </android.support.v7.widget.CardView>
+            </ScrollView>
+
+        </android.support.v7.widget.CardView>
+
+    </RelativeLayout>
 
 </FrameLayout>

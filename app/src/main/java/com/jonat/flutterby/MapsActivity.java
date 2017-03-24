@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
@@ -20,15 +21,19 @@ import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.firebase.client.Firebase;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.LocationCallback;
+import com.firebase.ui.storage.images.FirebaseImageLoader;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Status;
@@ -58,8 +63,13 @@ import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 import com.google.maps.android.SphericalUtil;
+import com.jonat.flutterby.auth.ProfileActivity;
 import com.jonat.flutterby.config.Config;
+import com.jonat.flutterby.display_stories.PoiTag;
+import com.jonat.flutterby.display_stories.SimilarStoriesActivity;
 import com.jonat.flutterby.poi.POIGenre;
 import com.jonat.flutterby.poi.PointOfInterest;
 import com.jonat.flutterby.poi.Recommender;
@@ -96,6 +106,7 @@ public class MapsActivity extends FragmentActivity implements
     private GeoFire geoFire;
     private FirebaseAuth auth;
     private DatabaseReference mDatabase;
+    private FirebaseStorage storage;
 
     // Ordinary Vars
     private GoogleMap mMap;
@@ -106,17 +117,23 @@ public class MapsActivity extends FragmentActivity implements
     private Double mLastLat;
 
     // Map vars
-    List<AsyncTask<Void, Void, Void>> threadList;
+    public List<AsyncTask<Void, Void, Void>> threadList;
+    public Vector<Marker> markers;
+    public Vector<PointOfInterest> poiVector;
 
     //Objects
     private User user;
     private Recommender recommender;
     private Config config;
+    private Timer timer;
 
     // End and start times for measuring interest
     private long endTime;
     private long startTime;
     private PlaceAutocompleteFragment autocompleteFragment;
+
+    // Widgets
+    private FloatingActionButton profileButton;
 
 
     // ************** OVERRIDE METHODS *****************
@@ -132,10 +149,18 @@ public class MapsActivity extends FragmentActivity implements
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapView = mapFragment.getView();
-        mapFragment.getMapAsync(this);
-
+        mapFragment.getMapAsync(this);;
         autocompleteFragment = (PlaceAutocompleteFragment)
                 getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
+
+        profileButton = (FloatingActionButton) findViewById(R.id.profileButton);
+        profileButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MapsActivity.this, ProfileActivity.class));
+                onPause();
+            }
+        });
 
         Firebase.setAndroidContext(this);
 
@@ -163,6 +188,8 @@ public class MapsActivity extends FragmentActivity implements
         // threads
         threadList = new ArrayList<>();
 
+        markers = new Vector<>();
+
         auth = FirebaseAuth.getInstance();
         try {
             user = new User(auth.getCurrentUser().getEmail());
@@ -172,27 +199,27 @@ public class MapsActivity extends FragmentActivity implements
         this.config = new Config();
         recommender = new Recommender(user);
 
-
         // Firebase ref
         mRef = new Firebase(config.FIREBASE_URL);
         this.ref = FirebaseDatabase.getInstance().getReference(config.GEO_FIRE_REF);
         // setup GeoFire
         this.geoFire = new GeoFire(ref);
         // Basic ref
-        mDatabase = FirebaseDatabase.getInstance().getReference();
+        this.mDatabase = FirebaseDatabase.getInstance().getReference();
+        this.storage = FirebaseStorage.getInstance();
 
         // Actual Locations
-//        geoFire.setLocation("POI01/location", new GeoLocation(51.9012121,-8.4645262));
-//        geoFire.setLocation("POI02/location", new GeoLocation(51.8929344,-8.4856053));
-//        geoFire.setLocation("POI03/location", new GeoLocation(51.899388,-8.4749062));
-//        geoFire.setLocation("POI04/location", new GeoLocation(51.897418,-8.4664452));
-//        geoFire.setLocation("POI05/location", new GeoLocation(51.8895726,-8.4715865));
-//        geoFire.setLocation("POI06/location", new GeoLocation(51.8913665,-8.4927169));
-//        geoFire.setLocation("POI07/location", new GeoLocation(51.8973901,-8.4785351));
-//        geoFire.setLocation("POI08/location", new GeoLocation(51.8967649,-8.4785212));
-//        geoFire.setLocation("POI09/location", new GeoLocation(51.8975504,-8.4813676));
-//        geoFire.setLocation("POI10/location", new GeoLocation(51.9025669,-8.4772437));
-//        geoFire.setLocation("POI11/location", new GeoLocation(51.8978499,-8.473263));
+        geoFire.setLocation("POI01/location", new GeoLocation(51.9012121,-8.4645262));
+        geoFire.setLocation("POI02/location", new GeoLocation(51.8929344,-8.4856053));
+        geoFire.setLocation("POI03/location", new GeoLocation(51.899388,-8.4749062));
+        geoFire.setLocation("POI04/location", new GeoLocation(51.897418,-8.4664452));
+        geoFire.setLocation("POI05/location", new GeoLocation(51.8895726,-8.4715865));
+        geoFire.setLocation("POI06/location", new GeoLocation(51.8913665,-8.4927169));
+        geoFire.setLocation("POI07/location", new GeoLocation(51.8973901,-8.4785351));
+        geoFire.setLocation("POI08/location", new GeoLocation(51.8967649,-8.4785212));
+        geoFire.setLocation("POI09/location", new GeoLocation(51.8975504,-8.4813676));
+        geoFire.setLocation("POI10/location", new GeoLocation(51.9025669,-8.4772437));
+        geoFire.setLocation("POI11/location", new GeoLocation(51.8978499,-8.473263));
 
         // Little Island values for testing
 //        geoFire.setLocation("POI01/location", new GeoLocation(51.9102333,-8.3567585));
@@ -204,9 +231,10 @@ public class MapsActivity extends FragmentActivity implements
 //        geoFire.setLocation("POI07/location", new GeoLocation(51.9130961,-8.350365));
 //        geoFire.setLocation("POI08/location", new GeoLocation(51.9068942,-8.3513384));
 //        geoFire.setLocation("POI09/location", new GeoLocation(51.9068942,-8.3513384));
-//        geoFire.setLocation("POI10/location", new GeoLocation(51.9063591,-8.3536571));
-//        geoFire.setLocation("POI11/location", new GeoLocation(51.9063591,-8.3536571));
+//        geoFire.setLocation("POI10/location", new GeoLocation(51.893177, -8.501783));
+//        geoFire.setLocation("POI11/location", new GeoLocation(51.893783, -8.499128));
 
+//        timer = new Timer();
 
     }
 
@@ -247,17 +275,19 @@ public class MapsActivity extends FragmentActivity implements
                     == PackageManager.PERMISSION_GRANTED) {
                 buildGoogleApiClient();
                 mMap.setMyLocationEnabled(true);
+
             }
         }
         else {
+
             buildGoogleApiClient();
             mMap.setMyLocationEnabled(true);
+
         }
         if (mapView != null &&
                 mapView.findViewById(Integer.parseInt("1")) != null) {
             // Get the button view
             View locationButton = ((View) mapView.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
-            // and next place it, on bottom right (as Google Maps app)
             RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)
                     locationButton.getLayoutParams();
             // position on right bottom
@@ -274,10 +304,31 @@ public class MapsActivity extends FragmentActivity implements
         mLastLng = mLastLocation.getLongitude();
         mLastLat = mLastLocation.getLongitude();
         final LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 10);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 12);
         mMap.animateCamera(cameraUpdate);
         autocompleteFragment.setBoundsBias(toBounds(latLng, 500));
-        callAsyncTask();
+        if(markers!=null){
+            for(Marker marker: markers){
+                marker.remove();
+            }
+        }
+//        if(poiVector == null) {
+            callAsyncTask();
+//        }else {
+//            System.out.println("POINT OF INTEREST VECTOR:" + poiVector);
+//            if (poiVector != null) {
+//                Log.d(TAG, "poiVector not null");
+//                for (PointOfInterest poi : poiVector) {
+//                    Log.d(TAG, "POIVECTOR: Iterating on " + poi.getPOITitle());
+//                    Location poiLocation = poi.getLocation();
+//                    float distance = mLastLocation.distanceTo(poiLocation);
+//                    if (distance < config.COMPARISON_DISTANCE) {
+//                        Log.d(TAG, "Got to display marker");
+//                        displayMarker(new MarkerOptions(), true, poi);
+//                    }
+//                }
+//            }
+//        }
         //stop location updates
         if (mGoogleApiClient != null) {
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
@@ -296,8 +347,6 @@ public class MapsActivity extends FragmentActivity implements
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-                    // permission was granted. Do the
-                    // contacts-related task you need to do.
                     if (ContextCompat.checkSelfPermission(this,
                             Manifest.permission.ACCESS_FINE_LOCATION)
                             == PackageManager.PERMISSION_GRANTED) {
@@ -378,8 +427,13 @@ public class MapsActivity extends FragmentActivity implements
     }
 
     protected void callAsyncTask(){
-        final Handler handler = new Handler();
+        if(markers!=null){
+            for(Marker marker: markers){
+                marker.remove();
+            }
+        }
         Timer timer = new Timer();
+        final Handler handler = new Handler();
         TimerTask doAsyncTask = new TimerTask() {
             @Override
             public void run() {
@@ -388,6 +442,7 @@ public class MapsActivity extends FragmentActivity implements
                     public void run() {
                         try{
                             // Define Asynchronous Task to allow for data access in different threads
+//
                             AsyncTask<Void, Void, Void> poiLoop = new BackgroundPointOfInterest();
                             AsyncTask<Void, Void, Void> interestLoop = new BackgroundFillUserInterests();
                             threadList.add(poiLoop);
@@ -405,6 +460,7 @@ public class MapsActivity extends FragmentActivity implements
                                 Log.d(TAG, "Interests filled, or are null. Continuing...");
                             }
                             poiLoop.execute();
+
                             Log.d(TAG, "Background Loop executed");
                         }catch (Exception e){
                             e.printStackTrace();
@@ -413,7 +469,7 @@ public class MapsActivity extends FragmentActivity implements
                 });
             }
         };
-        timer.schedule(doAsyncTask, 1000);
+        timer.schedule(doAsyncTask, 0, 10000);
     }
 
     private class BackgroundFillUserInterests extends  AsyncTask<Void, Void, Void>{
@@ -458,7 +514,7 @@ public class MapsActivity extends FragmentActivity implements
         }
     }
 
-    // Create subclass for Asynchronous Tasks that handle pulling data from Firebase
+//     Create subclass for Asynchronous Tasks that handle pulling data from Firebase
     private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... voids) {
@@ -516,7 +572,7 @@ public class MapsActivity extends FragmentActivity implements
 
                                     if (distance < config.COMPARISON_DISTANCE) {
                                         if (user.noStoredInterests()) {
-                                            final PointOfInterest poi = new PointOfInterest(poiLatLng, mPoiTitle, mapOfStories, genreVector);
+                                            final PointOfInterest poi = new PointOfInterest(poiLocation, mPoiTitle, mapOfStories, genreVector);
 
                                             // Returning null currently, so figure that out a little bit pls
                                             PointOfInterest recommendedPoi = returnPoi(poi, distance);
@@ -526,7 +582,7 @@ public class MapsActivity extends FragmentActivity implements
                                             }
                                             displayMarker(new MarkerOptions(), true, recommendedPoi);
                                         } else {
-                                            displayMarker(mapOfStories, genreVector, poiLatLng, mPoiTitle, distance);
+                                            displayMarker(mapOfStories, genreVector, poiLocation, mPoiTitle, distance);
                                         }
                                     } else {
                                         Log.d(TAG, "****************** Didn't access " +
@@ -555,21 +611,11 @@ public class MapsActivity extends FragmentActivity implements
         }
     }
 
-    private PointOfInterest returnPoi(PointOfInterest poi, Float distance){
-        HashMap<PointOfInterest, Float> distanceMap = new HashMap<>();
-        if(Float.isNaN(distance)){
-            Log.d(TAG, "Return POI: Distance isn't a number");
-        }
-        if(poi == null){
-            Log.d(TAG, "Return POI: Point Of Interest is null");
-        }
-        distanceMap.put(poi, distance);
-        return recommender.recommendPoi(distanceMap);
-    }
 
-    private void displayMarker(HashMap<String, Story> mapOfStories, Vector<POIGenre> genreVector,
-                               LatLng poiLatLng, String mPoiTitle, float distance){
-        final PointOfInterest poi = new PointOfInterest(poiLatLng, mPoiTitle, mapOfStories, genreVector);
+
+    public void displayMarker(HashMap<String, Story> mapOfStories, Vector<POIGenre> genreVector,
+                               Location poiLocation, String mPoiTitle, float distance){
+        final PointOfInterest poi = new PointOfInterest(poiLocation, mPoiTitle, mapOfStories, genreVector);
         if(poi == null){
             Log.d(TAG, "Display Marker: Point of interest is null");
         }
@@ -582,18 +628,23 @@ public class MapsActivity extends FragmentActivity implements
         displayMarker(new MarkerOptions(), true, recommendedPoi);
     }
 
-    private void displayMarker(MarkerOptions options, Boolean display, PointOfInterest poi) {
-        LatLng poiLatLng = poi.getLatLng();
+    public void displayMarker(MarkerOptions options, boolean display, PointOfInterest poi) {
+        Location poiLocation = poi.getLocation();
+        LatLng poiLatLng = new LatLng(poiLocation.getLatitude(), poiLocation.getLongitude());
         HashMap<String, Story> mPoiStories = poi.getPOIStories();
 
         Story recommendedStory = recommender.recommendStory(mPoiStories);
         String storyText = recommendedStory.getStory();
+
+        PoiTag poiTag = new PoiTag(poi, recommendedStory);
         Marker marker = mMap.addMarker(options.position(poiLatLng)
                 .title(poi.getPOITitle())
                 .snippet(storyText)
                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.visit)));
-        marker.setTag(recommendedStory);
+        marker.setTag(poiTag);
         marker.setVisible(display);
+
+        markers.add(marker);
 
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
@@ -611,6 +662,22 @@ public class MapsActivity extends FragmentActivity implements
 
     }
 
+    private PointOfInterest returnPoi(PointOfInterest poi, Float distance){
+        HashMap<PointOfInterest, Float> distanceMap = new HashMap<>();
+        if(Float.isNaN(distance)){
+            Log.d(TAG, "Return POI: Distance isn't a number");
+        }
+        if(poi == null){
+            Log.d(TAG, "Return POI: Point Of Interest is null");
+        }
+        distanceMap.put(poi, distance);
+        return recommender.recommendPoi(distanceMap);
+    }
+
+    public void setPoiVector(Vector<PointOfInterest> poiVector){
+        this.poiVector = poiVector;
+    }
+
     public void showPopup(final Marker marker) {
         Log.d(TAG, "Show Popup: Called");
         View popupView = getLayoutInflater().inflate(R.layout.fragment_story, null);
@@ -618,14 +685,41 @@ public class MapsActivity extends FragmentActivity implements
         PopupWindow popupWindow = new PopupWindow(popupView,
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
-        TextView title = (TextView) popupView.findViewById(R.id.poiTitleView);
-        TextView story = (TextView) popupView.findViewById(R.id.poiStoryView);
+        final PoiTag poiTag = (PoiTag) marker.getTag();
+        final PointOfInterest poi = poiTag.getPoi();
+        HashMap<String, Story> storyMap = poi.getPOIStories();
+        final ArrayList<String> stories = new ArrayList<>();
+        for(String story: storyMap.keySet()){
+            stories.add(storyMap.get(story).getStory());
+        }
 
         String titleText = marker.getTitle();
         String storyText = marker.getSnippet();
 
+        StorageReference storageRef = storage.getReference("images");
+        StorageReference imageRef = storageRef.child(titleText+".jpg");
+
+        TextView title = (TextView) popupView.findViewById(R.id.poiTitleView);
+        TextView story = (TextView) popupView.findViewById(R.id.poiStoryView);
+        ImageView picture = (ImageView) popupView.findViewById(R.id.poiImageView);
+        ImageButton infoButton = (ImageButton) popupView.findViewById(R.id.infoButton);
+
+        infoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MapsActivity.this, SimilarStoriesActivity.class);
+                intent.putExtra("title", poi.getPOITitle());
+                intent.putExtra(poi.getPOITitle(), stories);
+                startActivity(intent);
+            }
+        });
+
         title.setText(titleText);
         story.setText(storyText);
+        Glide.with(this)
+                .using(new FirebaseImageLoader())
+                .load(imageRef)
+                .into(picture);
 
         popupWindow.setFocusable(true);
         popupWindow.setTouchable(true);
@@ -661,7 +755,7 @@ public class MapsActivity extends FragmentActivity implements
                 endTime = System.currentTimeMillis();
                 recommender.setEndTime(endTime);
 
-                Story story = (Story) marker.getTag();
+                Story story = poiTag.getRecommendedStory();
                 String storyText = story.getStory();
                 String storyTitle = story.getStoryTitle();
                 float measure = recommender.normaliseScore(storyText);
@@ -670,10 +764,7 @@ public class MapsActivity extends FragmentActivity implements
                     user.pushData(storyTitle, measure);
                 }
                 Log.d(TAG, "Refreshing");
-//                Intent refresh = new Intent(MapsActivity.this, MapsActivity.class);
-//                MapsActivity.this.finish();
-//                startActivity(refresh);
-//
+                callAsyncTask();
                 Log.d(TAG, "Pop Up Window closed for " + marker.getTitle());
             }
         });

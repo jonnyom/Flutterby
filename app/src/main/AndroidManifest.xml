@@ -43,8 +43,7 @@
         </activity>
         <activity
             android:name=".MapsActivity"
-            android:label="@string/title_activity_maps"
-            android:parentActivityName=".auth.ProfileActivity"/>
+            android:label="@string/title_activity_maps"/>
         <activity
             android:name=".auth.SignupActivity"
             android:parentActivityName=".auth.ProfileActivity"/>
@@ -53,10 +52,16 @@
             android:parentActivityName=".auth.ProfileActivity"/>
         <activity
             android:name=".auth.ProfileActivity"
-            android:label="Profile" />
+            android:label="Profile"
+            android:parentActivityName=".MapsActivity"/>
         <activity
             android:name=".auth.ResetPasswordActivity"
             android:parentActivityName=".auth.ProfileActivity"/>
+        <activity
+            android:name=".display_stories.SimilarStoriesActivity"
+            android:label="@string/title_activity_similar_stories"
+            android:theme="@style/AppTheme">
+        </activity>
     </application>
 
 </manifest>

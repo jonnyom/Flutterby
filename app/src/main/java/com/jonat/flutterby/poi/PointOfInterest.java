@@ -1,5 +1,7 @@
 package com.jonat.flutterby.poi;
 
+import android.location.Location;
+
 import com.google.android.gms.maps.model.LatLng;
 
 import java.util.HashMap;
@@ -13,13 +15,17 @@ public class PointOfInterest {
     private String title;
     private HashMap<String, Story> stories;
     private Vector<POIGenre> genres;
-    private LatLng latLng;
+    private Location location;
 
-    public PointOfInterest(LatLng latLng, String title, HashMap<String, Story> stories, Vector<POIGenre> genres){
-        this.latLng = latLng;
+    public PointOfInterest(Location location, String title, HashMap<String, Story> stories, Vector<POIGenre> genres){
+        this.location = location;
         this.title = title;
         this.stories = stories;
         this.genres = genres;
+    }
+
+    public void setLocation(Location location){
+        this.location = location;
     }
 
     /**
@@ -42,6 +48,6 @@ public class PointOfInterest {
         return genres;
     }
 
-    public LatLng getLatLng(){return latLng; }
+    public Location getLocation(){return location; }
 
 }

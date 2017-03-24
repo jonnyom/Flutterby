@@ -126,7 +126,7 @@ public class Recommender {
                 for (String searchStory : userInterests.keySet()) {
                     Log.d(TAG, "Recommend POI: Iterating through user's interest at: " + searchStory);
                     float score = userInterests.get(searchStory);
-                    if ((distance / score) >= scorer) {
+                    if ((score / distance) >= scorer) {
                         Log.d(TAG, "Recommend POI: Score: " + distance/score);
                         scorer = score;
                         poi = pointOfInterest;
