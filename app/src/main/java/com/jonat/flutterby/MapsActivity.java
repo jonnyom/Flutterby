@@ -61,6 +61,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.vision.Frame;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseException;
@@ -70,6 +71,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.maps.android.SphericalUtil;
+import com.jonat.flutterby.auth.LoginActivity;
 import com.jonat.flutterby.auth.ProfileActivity;
 import com.jonat.flutterby.config.Config;
 import com.jonat.flutterby.display_stories.PoiTag;
@@ -113,6 +115,7 @@ public class MapsActivity extends FragmentActivity implements
     private FirebaseAuth auth;
     private DatabaseReference mDatabase;
     private FirebaseStorage storage;
+    private FirebaseAuth.AuthStateListener authListener;
 
     // Ordinary Vars
     private GoogleMap mMap;
@@ -125,14 +128,11 @@ public class MapsActivity extends FragmentActivity implements
     // Map vars
     public List<AsyncTask<Void, Void, Void>> threadList;
     public HashMap<PointOfInterest, Marker> markers;
-    public Vector<PointOfInterest> poiVector;
 
     //Objects
     private User user;
     private Recommender recommender;
     private Config config;
-    private Timer timer;
-
     // End and start times for measuring interest
     private long endTime;
     private long startTime;
@@ -196,11 +196,24 @@ public class MapsActivity extends FragmentActivity implements
         markers = new HashMap<>();
 
         auth = FirebaseAuth.getInstance();
-        try {
-            user = new User(auth.getCurrentUser().getEmail());
-        }catch (Exception e){
-            Log.d(TAG, "Exception raised: " + e);
+        if(auth.getCurrentUser() == null){
+            startActivity(new Intent(MapsActivity.this, LoginActivity.class));
+            finish();
         }
+        authListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+                if (user == null) {
+                    // user auth state is changed - user is null
+                    // launch login activity
+                    startActivity(new Intent(MapsActivity.this, LoginActivity.class));
+                    finish();
+                }
+            }
+        };
+
+        user = new User(auth.getCurrentUser().getEmail());
         this.config = new Config();
         recommender = new Recommender(user);
 
@@ -307,12 +320,9 @@ public class MapsActivity extends FragmentActivity implements
         mLastLng = mLastLocation.getLongitude();
         mLastLat = mLastLocation.getLongitude();
         final LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 12);
-        mMap.animateCamera(cameraUpdate);
+        mMap.moveCamera( CameraUpdateFactory.newLatLngZoom(latLng , 14.0f) );
         autocompleteFragment.setBoundsBias(toBounds(latLng, 500));
         callAsyncTask();
-//        showMarker();
-//
         //stop location updates
         if (mGoogleApiClient != null) {
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
@@ -548,7 +558,6 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
                                     Log.d(TAG, "Location is null");
                                 }
                                 // Create poi object with title, story and genre
-                                final LatLng poiLatLng = new LatLng(location.latitude, location.longitude);
                                 final Location poiLocation = new Location("POI");
                                 poiLocation.setLatitude(location.latitude);
                                 poiLocation.setLongitude(location.longitude);
@@ -569,6 +578,7 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
                         public void onCancelled(DatabaseError databaseError) {
                             System.err.println("There was an error " +
                                     "getting the GeoFire location: " + databaseError);
+                            Toast.makeText(MapsActivity.this, "Permission Denied. Please Login again.", Toast.LENGTH_SHORT).show();
                         }
                     });
                 }
@@ -576,6 +586,7 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 System.err.println("There was an error getting the Firebase data: " + databaseError);
+                Toast.makeText(MapsActivity.this, "Permission Denied. Please Login again.", Toast.LENGTH_SHORT).show();
             }
         });
         return null;
@@ -583,6 +594,11 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
 }
 
     public void displayMarker(MarkerOptions options, PointOfInterest poi) {
+        if(markers!=null){
+            if(markers.get(poi)!=null){
+                markers.get(poi).remove();
+            }
+        }
         Location poiLocation = poi.getLocation();
         LatLng poiLatLng = new LatLng(poiLocation.getLatitude(), poiLocation.getLongitude());
         HashMap<String, Story> mPoiStories = poi.getPOIStories();
@@ -717,7 +733,5 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        Intent intent = getParentActivityIntent();
-        startActivity(intent);
     }
 }
