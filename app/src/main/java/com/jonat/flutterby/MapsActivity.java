@@ -127,7 +127,7 @@ public class MapsActivity extends FragmentActivity implements
 
     // Map vars
     public List<AsyncTask<Void, Void, Void>> threadList;
-    public HashMap<PointOfInterest, Marker> markers;
+    public HashMap<String, Marker> markers;
 
     //Objects
     private User user;
@@ -422,7 +422,7 @@ public class MapsActivity extends FragmentActivity implements
 
     protected void callAsyncTask(){
         if(markers!=null) {
-            for (PointOfInterest poi : markers.keySet()) {
+            for (String poi : markers.keySet()) {
                 markers.get(poi).remove();
             }
         }
@@ -548,7 +548,6 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
                             genreVector.add(mPoiGenre);
                         }
                     }
-                    final HashMap<PointOfInterest, Marker> innerMarkers = markers;
                     //Query location and place marker on said location
                     geoFire.getLocation(mPoiSnapshot+"/location", new LocationCallback() {
                         @Override
@@ -563,13 +562,12 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
                                 poiLocation.setLongitude(location.longitude);
                                 float distance = mLastLocation.distanceTo(poiLocation);
                                 final PointOfInterest poi = new PointOfInterest(poiLocation, mPoiTitle, mapOfStories, genreVector);
-                                if (user.noStoredInterests()) {
+
+                                if (recommender.recommendPoi(poi, distance)) {
+                                    Log.d(TAG, "On Location Result: Point Of Interest " + poi.getPOITitle() + " is recommended");
                                     displayMarker(new MarkerOptions(), poi);
-                                } else {
-                                    if (recommender.recommendPoi(poi, distance)) {
-                                        displayMarker(new MarkerOptions(), poi);
-                                    }
                                 }
+
                             }catch(Exception e){
                                 Log.d(TAG, "Exception raised: " + e);
                             }
@@ -595,8 +593,10 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
 
     public void displayMarker(MarkerOptions options, PointOfInterest poi) {
         if(markers!=null){
-            if(markers.get(poi)!=null){
-                markers.get(poi).remove();
+            Log.d(TAG, "Display Marker: Markers map is not null");
+            if(markers.get(poi.getPOITitle())!=null){
+                Log.d(TAG, "Display Marker: Marker is not null, removing");
+                markers.get(poi.getPOITitle()).remove();
             }
         }
         Location poiLocation = poi.getLocation();
@@ -614,7 +614,7 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
         marker.setTag(poiTag);
         marker.setVisible(true);
 
-        markers.put(poi, marker);
+        markers.put(poi.getPOITitle(), marker);
 
             mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
                 @Override

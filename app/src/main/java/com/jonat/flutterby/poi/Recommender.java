@@ -76,28 +76,37 @@ public class Recommender {
     // Method that takes a map and iterates through them, finding the most suitable point of interest to show to the user
     public boolean recommendPoi(PointOfInterest poi, float distance){
         boolean shouldRecommend = false;
-        float scorer = 0;
-
-        Map<String, Float> userInterests = user.getInterests();
 
         if(Float.isNaN(distance)) {
             Log.d(TAG, "Recommend POI: distance found isn't a number");
         }else{
             Log.d(TAG, "Recommend POI: Distance found is a number: " + distance);
         }
-
-        for (String searchStory : poi.getPOIStories().keySet()) {
+        if(user.getInterests().isEmpty()){
+            Log.d(TAG, "Recommend POI: User has no interests, should recommend");
+            return true;
+        }
+        String highestInterest = user.getHighestInterest();
+        HashMap<String, Story> stories = poi.getPOIStories();
+        for (String searchStory : stories.keySet()) {
             Log.d(TAG, "Recommend POI: Iterating through point's stories at: " + searchStory);
-            if(userInterests.containsKey(searchStory)) {
-                float score = userInterests.get(searchStory);
-                if ((score / distance) >= scorer) {
-                    Log.d(TAG, "Recommend POI: Score: " + distance / score);
-                    scorer = score;
+                if(highestInterest.equals(searchStory)){
+                    Log.d(TAG, "Recommend POI: User's highest interest is the same as the current story, recommending point of interest...");
                     shouldRecommend = true;
+                    break;
+                }else {
+                    Log.d(TAG, "Recommend POI: User's highest interest " + highestInterest+ " is different to the current story " + searchStory);
+                    HashMap<String, Float> similarities = stories.get(searchStory).getSimilarities();
+                    float similarity = similarities.get(highestInterest);
+                    Log.d(TAG, "Recommend POI: Checking similarity to " + searchStory + " with similarity: " + similarity);
+                    if(similarity > config.SIMILARITY_THRESHOLD && distance < config.COMPARISON_DISTANCE){
+                        Log.d(TAG, "Recommend POI: Similarity of " + similarity + " is greater than similarity threshold "
+                                + config.SIMILARITY_THRESHOLD + ", and is " +
+                                "has a distance of " + distance + " should recommend");
+                        shouldRecommend = true;
+                    }
                 }
             }
-        }
-
         return shouldRecommend;
     }
 
