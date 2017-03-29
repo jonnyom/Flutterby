@@ -1,5 +1,6 @@
 package com.jonat.flutterby.poi;
 
+import android.nfc.Tag;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -72,77 +73,32 @@ public class Recommender {
         return returnVal;
     }
 
-    public PointOfInterest findClosest(HashMap<PointOfInterest, Float> poiDistances){
-        PointOfInterest poi = null;
-        float shortestDistance = Float.MAX_VALUE;
-        Log.d(TAG, "Looking for closest Point Of Interest");
-        if(poiDistances == null || poiDistances.isEmpty()){
-            Log.d(TAG, "Find Closest: poiDistances is NULL");
-        }
-        for(PointOfInterest pointOfInterest: poiDistances.keySet()){
-            float distance = poiDistances.get(pointOfInterest);
-            if(distance < shortestDistance){
-                shortestDistance = distance;
-                poi = pointOfInterest;
-            }
-        }
-
-        if(poi == null){
-            Log.d(TAG, "Find Closest: POI is null");
-        }
-
-        return poi;
-    }
-
     // Method that takes a map and iterates through them, finding the most suitable point of interest to show to the user
-    public PointOfInterest recommendPoi(HashMap<PointOfInterest, Float> poiDistances){
-        PointOfInterest poi = null;
+    public boolean recommendPoi(PointOfInterest poi, float distance){
+        boolean shouldRecommend = false;
         float scorer = 0;
-        if(poiDistances == null || poiDistances.size() == 0){
-            Log.d(TAG, "Recommend POI: poiDistances is NULL");
-        }else{
-            Log.d(TAG, "Recommend POI: poiDistance not null");
-        }
+
         Map<String, Float> userInterests = user.getInterests();
-        System.out.println(TAG + " Recommend POI: " + userInterests);
-        if(userInterests.containsKey(null) || userInterests.isEmpty()) {
-            Log.d(TAG, "Recommend POI: User interest contains a null or is empty");
-            Log.d(TAG, "Recommend POI: Calling findClosest");
-            poi = findClosest(poiDistances);
-            if(poi!= null){
-                Log.d(TAG, "Successfully called findClosest");
-            }else{
-                Log.d(TAG, "poi still null");
-            }
-        }else {
-            for (PointOfInterest pointOfInterest : poiDistances.keySet()) {
-                Log.d(TAG, "Recommend POI: Finding Most relevant Point Of Interest: " + pointOfInterest.getPOITitle());
-                float distance = poiDistances.get(pointOfInterest);
-                if(Float.isNaN(distance)) {
-                    Log.d(TAG, "Recommend POI: distance found isn't a number");
-                }else{
-                    Log.d(TAG, "Recommend POI: Distance found is a number: " + distance);
-                }
-                for (String searchStory : userInterests.keySet()) {
-                    Log.d(TAG, "Recommend POI: Iterating through user's interest at: " + searchStory);
-                    float score = userInterests.get(searchStory);
-                    if ((score / distance) >= scorer) {
-                        Log.d(TAG, "Recommend POI: Score: " + distance/score);
-                        scorer = score;
-                        poi = pointOfInterest;
-                    }
-                }
-            }
-        }
 
-        if(poi == null){
-            Log.d(TAG, "Recommend POI: Recommended POI is null, finding closest Point Of Interest");
-            poi = findClosest(poiDistances);
+        if(Float.isNaN(distance)) {
+            Log.d(TAG, "Recommend POI: distance found isn't a number");
         }else{
-            Log.d(TAG, "Recommend POI: poi is Not Null. Title: " + poi.getPOITitle());
+            Log.d(TAG, "Recommend POI: Distance found is a number: " + distance);
         }
 
-        return poi;
+        for (String searchStory : poi.getPOIStories().keySet()) {
+            Log.d(TAG, "Recommend POI: Iterating through point's stories at: " + searchStory);
+            if(userInterests.containsKey(searchStory)) {
+                float score = userInterests.get(searchStory);
+                if ((score / distance) >= scorer) {
+                    Log.d(TAG, "Recommend POI: Score: " + distance / score);
+                    scorer = score;
+                    shouldRecommend = true;
+                }
+            }
+        }
+
+        return shouldRecommend;
     }
 
     public Story recommendStory(HashMap<String, Story> stories){
@@ -181,7 +137,6 @@ public class Recommender {
         }
         Log.d(TAG, "Multiple Story Recommender: Multiple stories being searched to find most similar");
         Story recommendedStory = null;
-        Object[] poiStories = stories.keySet().toArray();
         Map<String, Float> userInterests  = user.getInterests();
         if(userInterests.containsKey(null) || userInterests.isEmpty()){
             Log.d(TAG, "Multiple Story Recommender: User Interests is empty. Returning random story");
@@ -199,116 +154,36 @@ public class Recommender {
                 }
             }
         }else {
-            Log.d(TAG, "Multiple Story Recommender: User interests are not empty");
-            HashMap<String, Float> similarities;
-            String mostSimTitle;
-            float maxScore = 0;
-            for (String searchStory : stories.keySet()) {
-                Log.d(TAG, "Multiple Story Recommender: Searching Story: " + searchStory);
-                Story story = stories.get(searchStory);
-                similarities = story.getSimilarities();
-                if(similarities == null || similarities.isEmpty()){
-                    Log.d(TAG, "Multiple Story Recommender: Similarities map is empty");
-                }else{
-                    Log.d(TAG, "Multiple Story Recommender: Similarities map is not empty" + similarities);
-                }
-                if (userInterests.containsKey(searchStory)
-                        && userInterests.get(searchStory) > maxScore) {
-                    maxScore = userInterests.get(searchStory);
-
-                    Log.d(TAG, "Multiple Story Recommender: User has previously viewed this story: "
-                            + searchStory + " With a score of: " + maxScore);
-                    Log.d(TAG, "Multiple Story Recommender: Finding most similar story");
-                    mostSimTitle = getMostSimilar(searchStory, poiStories, similarities);
-                    if(mostSimTitle != null){
-                        Log.d(TAG, "Multiple Story Recommender: Most Similar Title is not null: " + mostSimTitle);
+            Log.d(TAG, "Multiple Story Recommnder: User's interests are filled");
+            String highestInterest = user.getHighestInterest();
+            Log.d(TAG, "Multiple Story Recommender: User's highest interest is: " + highestInterest + " with a score of: " + userInterests.get(highestInterest));
+            Log.d(TAG, "Multiple Story Recommender: Finding most similar story to " + highestInterest);
+            float maxSimilarity = 0;
+            for(String searchStory: stories.keySet()){
+                if(highestInterest.equals(searchStory)){
+                    Log.d(TAG, "Multiple Story Recommender: User's highest interest is the same as the current story, skipping story...");
+                }else {
+                    Log.d(TAG, "Multiple Story Recommender: User's highest interest " + highestInterest+ " is different to the current story " + searchStory);
+                    HashMap<String, Float> similarities = stories.get(searchStory).getSimilarities();
+                    float similarity = similarities.get(highestInterest);
+                    Log.d(TAG, "Multiple Story Recommender: Checking similarity to " + searchStory + " with similarity: " + similarity);
+                    if(similarity > maxSimilarity){
+                        Log.d(TAG, "Multiple Story Recommender: Similarity of " + similarity + " is greater than previously seen similarity " + maxSimilarity);
+                        maxSimilarity = similarity;
+                        recommendedStory = stories.get(searchStory);
                     }else{
-                        Log.d(TAG, "Multiple Story Recommender: Most similar title is null");
+                        Log.d(TAG, "Multiple Story Recommender: Similarity of " + similarity + " is not greater than previously seen similarity" + maxSimilarity + ", " +
+                                "skipping...");
                     }
-                }else{
-                    Log.d(TAG, "Multiple Story Recommender: User has never viewed this story " + searchStory);
-                    String highestInterest = user.getHighestInterest();
-                    mostSimTitle = getMostSimToInterest(highestInterest, poiStories, similarities);
-                }
-                if(mostSimTitle != null){
-                    Log.d(TAG, "Multiple Story Recommender: Most Similar Title is not null: " + mostSimTitle);
-                }else{
-                    Log.d(TAG, "Multiple Story Recommender: Most similar title is null");
-                }
-                Log.d(TAG, "Multiple Story Recommender: Returning the recommended story");
-                recommendedStory = stories.get(mostSimTitle);
-                if(recommendedStory != null){
-                    Log.d(TAG, "Multiple Story Recommender: Recommended Story is not null: " + recommendedStory.getStoryTitle());
-                }else{
-                    Log.d(TAG, "Multiple Story Recommender: Recommended Story is null");
                 }
             }
+        }
+        if(recommendedStory!= null){
+            Log.d(TAG, "Multiple Story Recommender: Recommended story is: " + recommendedStory.getStoryTitle());
+        }else{
+            Log.d(TAG, "Multiple Story Recommender: Recommended story is null :(");
         }
         return recommendedStory;
-    }
-
-    @NonNull
-    private String getMostSimilar(String comparison, Object[] titles, HashMap<String, Float> similarities){
-        if(titles.length==0 || titles == null){
-            Log.d(TAG, "Get Most Similar: Titles array is empty");
-        }else{
-            Log.d(TAG, "Get Most Similar: Finding Most Similar story to titles: " + titles);
-        }
-        if(similarities.isEmpty() || similarities == null){
-            Log.d(TAG, "Get Most Similar: Similarities is empty or null");
-        }else{
-            Log.d(TAG, "Get Most Similar: Similarities isn't null, continuing");
-        }
-        String returnTitle = null;
-        float max = 0;
-        for(Object simTitle: titles){
-            Log.d(TAG, "Get Most Similar: Finding Most Similar story to title: " + simTitle);
-            float similarity = similarities.get(simTitle);
-            if(!comparison.equals(simTitle) && similarity > max){
-                Log.d(TAG, "Get Most Similar: Titles doesn't contain " + simTitle
-                        + " Similarity is bigger than max: " + similarity);
-                max = similarity;
-                returnTitle = (String) simTitle;
-            }
-        }
-        if(returnTitle == null){
-            Log.d(TAG, "Get Most Similar: Return title is null");
-        }else{
-            Log.d(TAG, "Get Most Similar: Return title is not null: " + returnTitle);
-        }
-        return returnTitle;
-    }
-
-    @NonNull
-    private String getMostSimToInterest(String highestInterest, Object[] titles, HashMap<String, Float> similarities){
-        if(titles.length==0 || titles == null){
-            Log.d(TAG, "Get Most Similar: Titles array is empty");
-        }else{
-            Log.d(TAG, "Get Most Similar: Finding Most Similar story to titles: " + titles);
-        }
-        if(similarities.isEmpty() || similarities == null){
-            Log.d(TAG, "Get Most Similar: Similarities is empty or null");
-        }else{
-            Log.d(TAG, "Get Most Similar: Similarities isn't null, continuing");
-        }
-        String returnTitle = null;
-        float max = 0;
-        for(Object simTitle: titles){
-            Log.d(TAG, "Get Most Similar: Finding Most Similar story to title: " + highestInterest);
-            float similarity = similarities.get(highestInterest);
-            if(!highestInterest.equals(simTitle) && similarity > max){
-                Log.d(TAG, "Get Most Similar: Titles doesn't contain " + simTitle
-                        + " Similarity is bigger than max: " + similarity);
-                max = similarity;
-                returnTitle = (String) simTitle;
-            }
-        }
-        if(returnTitle == null){
-            Log.d(TAG, "Get Most Similar: Return title is null");
-        }else{
-            Log.d(TAG, "Get Most Similar: Return title is not null: " + returnTitle);
-        }
-        return returnTitle;
     }
 
     private Object getRandomStory(HashMap<String, Story> stories){

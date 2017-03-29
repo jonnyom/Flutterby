@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
 import android.os.AsyncTask;
@@ -21,6 +22,8 @@ import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
@@ -56,6 +59,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.vision.Frame;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -83,6 +87,8 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
+
+import static com.jonat.flutterby.R.id.parent;
 
 
 public class MapsActivity extends FragmentActivity implements
@@ -118,7 +124,7 @@ public class MapsActivity extends FragmentActivity implements
 
     // Map vars
     public List<AsyncTask<Void, Void, Void>> threadList;
-    public Vector<Marker> markers;
+    public HashMap<PointOfInterest, Marker> markers;
     public Vector<PointOfInterest> poiVector;
 
     //Objects
@@ -164,7 +170,6 @@ public class MapsActivity extends FragmentActivity implements
 
         Firebase.setAndroidContext(this);
 
-
         autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
             @Override
             public void onPlaceSelected(Place place) {
@@ -188,7 +193,7 @@ public class MapsActivity extends FragmentActivity implements
         // threads
         threadList = new ArrayList<>();
 
-        markers = new Vector<>();
+        markers = new HashMap<>();
 
         auth = FirebaseAuth.getInstance();
         try {
@@ -233,8 +238,6 @@ public class MapsActivity extends FragmentActivity implements
 //        geoFire.setLocation("POI09/location", new GeoLocation(51.9068942,-8.3513384));
 //        geoFire.setLocation("POI10/location", new GeoLocation(51.893177, -8.501783));
 //        geoFire.setLocation("POI11/location", new GeoLocation(51.893783, -8.499128));
-
-//        timer = new Timer();
 
     }
 
@@ -307,28 +310,9 @@ public class MapsActivity extends FragmentActivity implements
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 12);
         mMap.animateCamera(cameraUpdate);
         autocompleteFragment.setBoundsBias(toBounds(latLng, 500));
-        if(markers!=null){
-            for(Marker marker: markers){
-                marker.remove();
-            }
-        }
-//        if(poiVector == null) {
-            callAsyncTask();
-//        }else {
-//            System.out.println("POINT OF INTEREST VECTOR:" + poiVector);
-//            if (poiVector != null) {
-//                Log.d(TAG, "poiVector not null");
-//                for (PointOfInterest poi : poiVector) {
-//                    Log.d(TAG, "POIVECTOR: Iterating on " + poi.getPOITitle());
-//                    Location poiLocation = poi.getLocation();
-//                    float distance = mLastLocation.distanceTo(poiLocation);
-//                    if (distance < config.COMPARISON_DISTANCE) {
-//                        Log.d(TAG, "Got to display marker");
-//                        displayMarker(new MarkerOptions(), true, poi);
-//                    }
-//                }
-//            }
-//        }
+        callAsyncTask();
+//        showMarker();
+//
         //stop location updates
         if (mGoogleApiClient != null) {
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
@@ -427,9 +411,9 @@ public class MapsActivity extends FragmentActivity implements
     }
 
     protected void callAsyncTask(){
-        if(markers!=null){
-            for(Marker marker: markers){
-                marker.remove();
+        if(markers!=null) {
+            for (PointOfInterest poi : markers.keySet()) {
+                markers.get(poi).remove();
             }
         }
         Timer timer = new Timer();
@@ -442,7 +426,6 @@ public class MapsActivity extends FragmentActivity implements
                     public void run() {
                         try{
                             // Define Asynchronous Task to allow for data access in different threads
-//
                             AsyncTask<Void, Void, Void> poiLoop = new BackgroundPointOfInterest();
                             AsyncTask<Void, Void, Void> interestLoop = new BackgroundFillUserInterests();
                             threadList.add(poiLoop);
@@ -469,7 +452,7 @@ public class MapsActivity extends FragmentActivity implements
                 });
             }
         };
-        timer.schedule(doAsyncTask, 0, 10000);
+        timer.schedule(doAsyncTask, 0, 60000);
     }
 
     private class BackgroundFillUserInterests extends  AsyncTask<Void, Void, Void>{
@@ -515,120 +498,91 @@ public class MapsActivity extends FragmentActivity implements
     }
 
 //     Create subclass for Asynchronous Tasks that handle pulling data from Firebase
-    private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
-        @Override
-        protected Void doInBackground(Void... voids) {
-            ref.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    long idIncrement = 0;
-                    for (final DataSnapshot poiSnapshot : dataSnapshot.getChildren()) {
+private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
 
-                        final Map<String, String> genreMap = new HashMap<>();
-                        final String mPoiSnapshot = poiSnapshot.getKey();
-                        final HashMap<String, Story> mapOfStories = new HashMap<>();
-                        final Vector<POIGenre> genreVector = new Vector<>();
+    @Override
+    protected Void doInBackground(Void... voids) {
+        ref.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                long idIncrement = 0;
+                for (final DataSnapshot poiSnapshot : dataSnapshot.getChildren()) {
 
-                        // Get POI data from Firebase
-                        final String mPoiTitle = (String) poiSnapshot.child("title").getValue();
+                    final Map<String, String> genreMap = new HashMap<>();
+                    final String mPoiSnapshot = poiSnapshot.getKey();
+                    final HashMap<String, Story> mapOfStories = new HashMap<>();
+                    final Vector<POIGenre> genreVector = new Vector<>();
 
-                        for(final DataSnapshot mPoiStories: poiSnapshot.child("stories").getChildren()){
-                            final String mPoiStoryTitle = (String) mPoiStories.child("storyTitle").getValue();
-                            final String mPoiStoryText = (String) mPoiStories.child("story").getValue();
-                            final HashMap<String, Float> similarities = new HashMap<>();
-                            for (DataSnapshot similaritySnapshot : mPoiStories.child("similarities").getChildren()) {
-                                String document = similaritySnapshot.getKey();
-                                double storedSim = (double) similaritySnapshot.getValue();
-                                float similarity = (float) storedSim;
-                                similarities.put(document, similarity);
-                            }
+                    // Get POI data from Firebase
+                    final String mPoiTitle = (String) poiSnapshot.child("title").getValue();
 
-                            final Story story = new Story(mPoiStoryTitle, mPoiStoryText, similarities);
-                            mapOfStories.put(story.getStoryTitle(), story);
-
-                            for(DataSnapshot genreSnapshot: poiSnapshot.child("genre").getChildren()){
-                                final String mPoiStoryGenreId = genreSnapshot.getKey();
-                                final String mPoiStoryGenreType = (String) genreSnapshot.child("genre").getValue();
-                                final POIGenre mPoiGenre = new POIGenre(idIncrement, mPoiStoryGenreType);
-                                genreMap.put(mPoiStoryGenreType, mPoiStoryGenreId);
-                                genreVector.add(mPoiGenre);
-                            }
+                    for(final DataSnapshot mPoiStories: poiSnapshot.child("stories").getChildren()){
+                        final String mPoiStoryTitle = (String) mPoiStories.child("storyTitle").getValue();
+                        final String mPoiStoryText = (String) mPoiStories.child("story").getValue();
+                        final HashMap<String, Float> similarities = new HashMap<>();
+                        for (DataSnapshot similaritySnapshot : mPoiStories.child("similarities").getChildren()) {
+                            String document = similaritySnapshot.getKey();
+                            double storedSim = (double) similaritySnapshot.getValue();
+                            float similarity = (float) storedSim;
+                            similarities.put(document, similarity);
                         }
 
-                        //Query location and place marker on said location
-                        geoFire.getLocation(mPoiSnapshot+"/location", new LocationCallback() {
-                            @Override
-                            public void onLocationResult(String key, GeoLocation location) {
-                                try{
-                                    if(location == null){
-                                        Log.d(TAG, "Location is null");
-                                    }
-                                    // Create poi object with title, story and genre
-                                    final LatLng poiLatLng = new LatLng(location.latitude, location.longitude);
-                                    final Location poiLocation = new Location("POI");
-                                    poiLocation.setLatitude(location.latitude);
-                                    poiLocation.setLongitude(location.longitude);
-                                    float distance = mLastLocation.distanceTo(poiLocation);
+                        final Story story = new Story(mPoiStoryTitle, mPoiStoryText, similarities);
+                        mapOfStories.put(story.getStoryTitle(), story);
 
-                                    if (distance < config.COMPARISON_DISTANCE) {
-                                        if (user.noStoredInterests()) {
-                                            final PointOfInterest poi = new PointOfInterest(poiLocation, mPoiTitle, mapOfStories, genreVector);
-
-                                            // Returning null currently, so figure that out a little bit pls
-                                            PointOfInterest recommendedPoi = returnPoi(poi, distance);
-                                            if (recommendedPoi == null) {
-                                                Log.d(TAG, "recommendedPOI is null");
-                                                System.exit(1);
-                                            }
-                                            displayMarker(new MarkerOptions(), true, recommendedPoi);
-                                        } else {
-                                            displayMarker(mapOfStories, genreVector, poiLocation, mPoiTitle, distance);
-                                        }
-                                    } else {
-                                        Log.d(TAG, "****************** Didn't access " +
-                                                "anything *******************");
-                                        Log.d(TAG, "************** "
-                                                + distance + " **************");
-                                    }
-                                }catch(Exception e){
-                                    Log.d(TAG, "Exception raised: " + e);
-                                }
-                            }
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-                                System.err.println("There was an error " +
-                                        "getting the GeoFire location: " + databaseError);
-                            }
-                        });
+                        for(DataSnapshot genreSnapshot: poiSnapshot.child("genre").getChildren()){
+                            final String mPoiStoryGenreId = genreSnapshot.getKey();
+                            final String mPoiStoryGenreType = (String) genreSnapshot.child("genre").getValue();
+                            final POIGenre mPoiGenre = new POIGenre(idIncrement, mPoiStoryGenreType);
+                            genreMap.put(mPoiStoryGenreType, mPoiStoryGenreId);
+                            genreVector.add(mPoiGenre);
+                        }
                     }
+                    final HashMap<PointOfInterest, Marker> innerMarkers = markers;
+                    //Query location and place marker on said location
+                    geoFire.getLocation(mPoiSnapshot+"/location", new LocationCallback() {
+                        @Override
+                        public void onLocationResult(String key, GeoLocation location) {
+                            try{
+                                if(location == null){
+                                    Log.d(TAG, "Location is null");
+                                }
+                                // Create poi object with title, story and genre
+                                final LatLng poiLatLng = new LatLng(location.latitude, location.longitude);
+                                final Location poiLocation = new Location("POI");
+                                poiLocation.setLatitude(location.latitude);
+                                poiLocation.setLongitude(location.longitude);
+                                float distance = mLastLocation.distanceTo(poiLocation);
+                                final PointOfInterest poi = new PointOfInterest(poiLocation, mPoiTitle, mapOfStories, genreVector);
+                                if (user.noStoredInterests()) {
+                                    displayMarker(new MarkerOptions(), poi);
+                                } else {
+                                    if (recommender.recommendPoi(poi, distance)) {
+                                        displayMarker(new MarkerOptions(), poi);
+                                    }
+                                }
+                            }catch(Exception e){
+                                Log.d(TAG, "Exception raised: " + e);
+                            }
+                        }
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            System.err.println("There was an error " +
+                                    "getting the GeoFire location: " + databaseError);
+                        }
+                    });
                 }
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-                    System.err.println("There was an error getting the Firebase data: " + databaseError);
-                }
-            });
-            return null;
-        }
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.err.println("There was an error getting the Firebase data: " + databaseError);
+            }
+        });
+        return null;
     }
+}
 
-
-
-    public void displayMarker(HashMap<String, Story> mapOfStories, Vector<POIGenre> genreVector,
-                               Location poiLocation, String mPoiTitle, float distance){
-        final PointOfInterest poi = new PointOfInterest(poiLocation, mPoiTitle, mapOfStories, genreVector);
-        if(poi == null){
-            Log.d(TAG, "Display Marker: Point of interest is null");
-        }
-        final PointOfInterest recommendedPoi = returnPoi(poi, distance);
-        if(recommendedPoi == null){
-            Log.d(TAG, "Display Marker: Recommended point of interest is null");
-        }else{
-            Log.d(TAG, "Display Marker: Recommended point of interest is not null " + recommendedPoi.getPOITitle());
-        }
-        displayMarker(new MarkerOptions(), true, recommendedPoi);
-    }
-
-    public void displayMarker(MarkerOptions options, boolean display, PointOfInterest poi) {
+    public void displayMarker(MarkerOptions options, PointOfInterest poi) {
         Location poiLocation = poi.getLocation();
         LatLng poiLatLng = new LatLng(poiLocation.getLatitude(), poiLocation.getLongitude());
         HashMap<String, Story> mPoiStories = poi.getPOIStories();
@@ -642,40 +596,23 @@ public class MapsActivity extends FragmentActivity implements
                 .snippet(storyText)
                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.visit)));
         marker.setTag(poiTag);
-        marker.setVisible(display);
+        marker.setVisible(true);
 
-        markers.add(marker);
+        markers.put(poi, marker);
 
-        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(Marker marker) {
-                if (!marker.isInfoWindowShown()) {
-                    startTime = System.currentTimeMillis();
-                    recommender.setStartTime(startTime);
-                    Log.d(TAG, "On Marker Click: Marker clicked");
-                    showPopup(marker);
-                    Log.d(TAG, "On Marker Click: showPopup called successfully");
+            mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                @Override
+                public boolean onMarkerClick(Marker marker) {
+                    if (!marker.isInfoWindowShown()) {
+                        startTime = System.currentTimeMillis();
+                        recommender.setStartTime(startTime);
+                        Log.d(TAG, "On Marker Click: Marker clicked");
+                        showPopup(marker);
+                        Log.d(TAG, "On Marker Click: showPopup called successfully");
+                    }
+                    return true;
                 }
-                return true;
-            }
-        });
-
-    }
-
-    private PointOfInterest returnPoi(PointOfInterest poi, Float distance){
-        HashMap<PointOfInterest, Float> distanceMap = new HashMap<>();
-        if(Float.isNaN(distance)){
-            Log.d(TAG, "Return POI: Distance isn't a number");
-        }
-        if(poi == null){
-            Log.d(TAG, "Return POI: Point Of Interest is null");
-        }
-        distanceMap.put(poi, distance);
-        return recommender.recommendPoi(distanceMap);
-    }
-
-    public void setPoiVector(Vector<PointOfInterest> poiVector){
-        this.poiVector = poiVector;
+            });
     }
 
     public void showPopup(final Marker marker) {

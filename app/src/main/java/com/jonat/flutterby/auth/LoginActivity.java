@@ -111,7 +111,7 @@ public class LoginActivity extends AppCompatActivity {
                                     }
                                 } else {
                                     user = new User(auth.getCurrentUser().getEmail());
-                                    Intent intent = new Intent(LoginActivity.this, ProfileActivity.class);
+                                    Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
                                     startActivity(intent);
                                     finish();
                                 }

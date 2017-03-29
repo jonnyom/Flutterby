@@ -9,4 +9,6 @@ public class Config {
     public static final int COMPARISON_DISTANCE = 500;
     public static final String GEO_FIRE_REF = "POIList";
     public static long TOO_SHORT = 2000;
+    public static int MARKER_LIMT = 8;
+    public static float SIMILARITY_THRESHOLD = (float) 0.6;
 }

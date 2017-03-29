@@ -1,5 +1,6 @@
 package com.jonat.flutterby.poi;
 
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -66,15 +67,19 @@ public class FogIndex {
         int count = 0;
         word = word.toLowerCase();
 
-        if (word.charAt(word.length()-1) == 'e') {
-            if (silentE(word)){
-                String newWord = word.substring(0, word.length()-1);
-                count = count + count(newWord);
+        try {
+            if (word.charAt(word.length() - 1) == 'e') {
+                if (silentE(word)) {
+                    String newWord = word.substring(0, word.length() - 1);
+                    count = count + count(newWord);
+                } else {
+                    count++;
+                }
             } else {
-                count++;
+                count = count + count(word);
             }
-        } else {
-            count = count + count(word);
+        }catch (StringIndexOutOfBoundsException e){
+            System.err.println("String index out of bounds: " + e);
         }
         return count;
     }

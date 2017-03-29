@@ -23,6 +23,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.jonat.flutterby.MapsActivity;
 import com.jonat.flutterby.config.Config;
 import com.jonat.flutterby.R;
 import com.jonat.flutterby.poi.User;
@@ -110,7 +111,7 @@ public class SignupActivity extends AppCompatActivity {
                                 if (!task.isSuccessful()) {
                                     Log.d(TAG,"Authentication failed." + task.getException());
                                 } else {
-                                    startActivity(new Intent(SignupActivity.this, ProfileActivity.class));
+                                    startActivity(new Intent(SignupActivity.this, MapsActivity.class));
                                     fUser = auth.getCurrentUser();
                                     writeNewUser(fUser.getUid(), fUser.getEmail());
                                     finish();
