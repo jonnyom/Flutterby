@@ -74,15 +74,10 @@ public class Recommender {
     }
 
     // Method that takes a map and iterates through them, finding the most suitable point of interest to show to the user
-    public boolean recommendPoi(PointOfInterest poi, float distance){
+    public boolean recommendPoi(PointOfInterest poi){
         boolean shouldRecommend = false;
 
-        if(Float.isNaN(distance)) {
-            Log.d(TAG, "Recommend POI: distance found isn't a number");
-        }else{
-            Log.d(TAG, "Recommend POI: Distance found is a number: " + distance);
-        }
-        if(user.getInterests().isEmpty()){
+        if(user.getInterests().containsKey(null) || user.getInterests().isEmpty()){
             Log.d(TAG, "Recommend POI: User has no interests, should recommend");
             return true;
         }
@@ -99,10 +94,9 @@ public class Recommender {
                     HashMap<String, Float> similarities = stories.get(searchStory).getSimilarities();
                     float similarity = similarities.get(highestInterest);
                     Log.d(TAG, "Recommend POI: Checking similarity to " + searchStory + " with similarity: " + similarity);
-                    if(similarity > config.SIMILARITY_THRESHOLD && distance < config.COMPARISON_DISTANCE){
+                    if(similarity > config.SIMILARITY_THRESHOLD){
                         Log.d(TAG, "Recommend POI: Similarity of " + similarity + " is greater than similarity threshold "
-                                + config.SIMILARITY_THRESHOLD + ", and is " +
-                                "has a distance of " + distance + " should recommend");
+                                + config.SIMILARITY_THRESHOLD +" should recommend");
                         shouldRecommend = true;
                     }
                 }
@@ -127,6 +121,7 @@ public class Recommender {
             Log.d(TAG, "Recommend Story: Point of Interest has multiple stories");
             Log.d(TAG, "Recommend Story: Calling Multiple Story Recommender");
             recommendedStory = multipleStoryRecommender(stories);
+//            recommendedStory = stories.get(getRandomStory(stories));
             if(recommendedStory != null){
                 Log.d(TAG, "Recommend Story: Successfully called multiple story recommender: "
                         + recommendedStory.getStoryTitle());
@@ -165,6 +160,11 @@ public class Recommender {
         }else {
             Log.d(TAG, "Multiple Story Recommnder: User's interests are filled");
             String highestInterest = user.getHighestInterest();
+            if(highestInterest == null){
+                Log.d(TAG, "Highest interest is null");
+                recommendedStory = stories.get(getRandomStory(stories));
+                return recommendedStory;
+            }
             Log.d(TAG, "Multiple Story Recommender: User's highest interest is: " + highestInterest + " with a score of: " + userInterests.get(highestInterest));
             Log.d(TAG, "Multiple Story Recommender: Finding most similar story to " + highestInterest);
             float maxSimilarity = 0;

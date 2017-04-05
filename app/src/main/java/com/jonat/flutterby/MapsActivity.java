@@ -227,30 +227,50 @@ public class MapsActivity extends FragmentActivity implements
         this.storage = FirebaseStorage.getInstance();
 
         // Actual Locations
-        geoFire.setLocation("POI01/location", new GeoLocation(51.9012121,-8.4645262));
-        geoFire.setLocation("POI02/location", new GeoLocation(51.8929344,-8.4856053));
-        geoFire.setLocation("POI03/location", new GeoLocation(51.899388,-8.4749062));
-        geoFire.setLocation("POI04/location", new GeoLocation(51.897418,-8.4664452));
-        geoFire.setLocation("POI05/location", new GeoLocation(51.8895726,-8.4715865));
-        geoFire.setLocation("POI06/location", new GeoLocation(51.8913665,-8.4927169));
-        geoFire.setLocation("POI07/location", new GeoLocation(51.8973901,-8.4785351));
-        geoFire.setLocation("POI08/location", new GeoLocation(51.8967649,-8.4785212));
-        geoFire.setLocation("POI09/location", new GeoLocation(51.8975504,-8.4813676));
-        geoFire.setLocation("POI10/location", new GeoLocation(51.9025669,-8.4772437));
-        geoFire.setLocation("POI11/location", new GeoLocation(51.8978499,-8.473263));
+//        geoFire.setLocation("POI01/location", new GeoLocation(51.9012121,-8.4645262));
+//        geoFire.setLocation("POI02/location", new GeoLocation(51.8929344,-8.4856053));
+//        geoFire.setLocation("POI03/location", new GeoLocation(51.899388,-8.4749062));
+//        geoFire.setLocation("POI04/location", new GeoLocation(51.897418,-8.4664452));
+//        geoFire.setLocation("POI05/location", new GeoLocation(51.8895726,-8.4715865));
+//        geoFire.setLocation("POI06/location", new GeoLocation(51.8913665,-8.4927169));
+//        geoFire.setLocation("POI07/location", new GeoLocation(51.8973901,-8.4785351));
+//        geoFire.setLocation("POI08/location", new GeoLocation(51.8967649,-8.4785212));
+//        geoFire.setLocation("POI09/location", new GeoLocation(51.8975504,-8.4813676));
+//        geoFire.setLocation("POI10/location", new GeoLocation(51.9025669,-8.4772437));
+//
+//        geoFire.setLocation("POI11/location", new GeoLocation(51.8978499,-8.473263));
+//        geoFire.setLocation("POI12/location", new GeoLocation(51.898740, -8.477477));
+//        geoFire.setLocation("POI13/location", new GeoLocation(51.899486, -8.476621));
+//        geoFire.setLocation("POI14/location", new GeoLocation(51.898630, -8.476907));
+//        geoFire.setLocation("POI15/location", new GeoLocation(51.897555, -8.469972));
+//        geoFire.setLocation("POI16/location", new GeoLocation(51.892440, -8.489445));
+//        geoFire.setLocation("POI17/location", new GeoLocation(51.8978113,-8.4695903));
+//        geoFire.setLocation("POI18/location", new GeoLocation(51.8995514,-8.4781879));
+//        geoFire.setLocation("POI19/location", new GeoLocation(51.8969583,-8.4689441));
+//        geoFire.setLocation("POI20/location", new GeoLocation(51.8974403,-8.477276));
+//
+//        geoFire.setLocation("POI21/location", new GeoLocation(51.9013721,-8.4695605));
+//        geoFire.setLocation("POI22/location", new GeoLocation(51.892479,-8.4890749));
+//        geoFire.setLocation("POI23/location", new GeoLocation(51.8981067,-8.4762183));
+//        geoFire.setLocation("POI24/location", new GeoLocation(51.901666, -8.478221));
+//        geoFire.setLocation("POI25/location", new GeoLocation(51.8940014,-8.474682));
+//        geoFire.setLocation("POI26/location", new GeoLocation(51.899591,-8.4787177));
+//        geoFire.setLocation("POI27/location", new GeoLocation(51.9008074,-8.4860276));
+//        geoFire.setLocation("POI28/location", new GeoLocation(51.8985444,-8.4736146));
+//        geoFire.setLocation("POI29/location", new GeoLocation(51.909571,-8.4785057));
+//        geoFire.setLocation("POI30/location", new GeoLocation(51.9031212,-8.4834416));
+//
+//        geoFire.setLocation("POI31/location", new GeoLocation(51.901699,-8.4732787));
+//        geoFire.setLocation("POI32/location", new GeoLocation(51.8939754,-8.4724908));
+//        geoFire.setLocation("POI33/location", new GeoLocation(51.894518,-8.4702218));
+//        geoFire.setLocation("POI34/location", new GeoLocation(51.8936458,-8.4861914));
+//        geoFire.setLocation("POI35/location", new GeoLocation(51.9095252,-8.4794875));
+//        geoFire.setLocation("POI36/location", new GeoLocation(51.896734,-8.4789237));
+//        geoFire.setLocation("POI37/location", new GeoLocation(51.8982094,-8.4696636));
+//        geoFire.setLocation("POI38/location", new GeoLocation(51.9003022,-8.4938953));
+//        geoFire.setLocation("POI39/location", new GeoLocation(51.8988374,-8.4796962));
+//        geoFire.setLocation("POI40/location", new GeoLocation(51.8985978,-8.4720776));
 
-        // Little Island values for testing
-//        geoFire.setLocation("POI01/location", new GeoLocation(51.9102333,-8.3567585));
-//        geoFire.setLocation("POI02/location", new GeoLocation(51.9102333,-8.3567585));
-//        geoFire.setLocation("POI03/location", new GeoLocation(51.9102333,-8.3567585));
-//        geoFire.setLocation("POI04/location", new GeoLocation(51.9102333,-8.3567585));
-//        geoFire.setLocation("POI05/location", new GeoLocation(51.9102333,-8.3567585));
-//        geoFire.setLocation("POI06/location", new GeoLocation(51.9102333,-8.3601215));
-//        geoFire.setLocation("POI07/location", new GeoLocation(51.9130961,-8.350365));
-//        geoFire.setLocation("POI08/location", new GeoLocation(51.9068942,-8.3513384));
-//        geoFire.setLocation("POI09/location", new GeoLocation(51.9068942,-8.3513384));
-//        geoFire.setLocation("POI10/location", new GeoLocation(51.893177, -8.501783));
-//        geoFire.setLocation("POI11/location", new GeoLocation(51.893783, -8.499128));
 
     }
 
@@ -421,11 +441,6 @@ public class MapsActivity extends FragmentActivity implements
     }
 
     protected void callAsyncTask(){
-        if(markers!=null) {
-            for (String poi : markers.keySet()) {
-                markers.get(poi).remove();
-            }
-        }
         Timer timer = new Timer();
         final Handler handler = new Handler();
         TimerTask doAsyncTask = new TimerTask() {
@@ -560,17 +575,19 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
                                 final Location poiLocation = new Location("POI");
                                 poiLocation.setLatitude(location.latitude);
                                 poiLocation.setLongitude(location.longitude);
-                                float distance = mLastLocation.distanceTo(poiLocation);
                                 final PointOfInterest poi = new PointOfInterest(poiLocation, mPoiTitle, mapOfStories, genreVector);
-
-                                if (recommender.recommendPoi(poi, distance)) {
-                                    Log.d(TAG, "On Location Result: Point Of Interest " + poi.getPOITitle() + " is recommended");
-                                    displayMarker(new MarkerOptions(), poi);
+                                Log.d(TAG, "Checking Point Of Interest: " + poi.getPOITitle());
+                                float distance = mLastLocation.distanceTo(poiLocation);
+                                if(distance< config.COMPARISON_DISTANCE){
+                                    if (recommender.recommendPoi(poi)) {
+                                        Log.d(TAG, "On Location Result: Point Of Interest " + poi.getPOITitle() + " is recommended");
+                                        displayMarker(new MarkerOptions(), poi);
+                                    }
                                 }
-
                             }catch(Exception e){
                                 Log.d(TAG, "Exception raised: " + e);
                             }
+
                         }
                         @Override
                         public void onCancelled(DatabaseError databaseError) {
@@ -579,6 +596,7 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
                             Toast.makeText(MapsActivity.this, "Permission Denied. Please Login again.", Toast.LENGTH_SHORT).show();
                         }
                     });
+
                 }
             }
             @Override
@@ -693,6 +711,12 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
             if (mMap.getProjection().getVisibleRegion().latLngBounds.contains(marker.getPosition())) {
                 if (!popupWindow.isShowing()) {
                     popupWindow.showAtLocation(popupView, Gravity.NO_GRAVITY, 0, 0);
+                    if(markers!=null) {
+                        for (String markerPoi : markers.keySet()) {
+                            markers.get(markerPoi).remove();
+                        }
+                    }
+                    callAsyncTask();
                 }
                 Point p = mMap.getProjection().toScreenLocation(marker.getPosition());
                 popupWindow.update(p.x - width / 2, p.y - height + 100, -1, -1);
@@ -716,8 +740,6 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
                 if(recommender.shouldRecommendTimer(storyText)){
                     user.pushData(storyTitle, measure);
                 }
-                Log.d(TAG, "Refreshing");
-                callAsyncTask();
                 Log.d(TAG, "Pop Up Window closed for " + marker.getTitle());
             }
         });
@@ -733,5 +755,6 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
+        finish();
     }
 }

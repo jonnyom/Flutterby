@@ -62,7 +62,7 @@ public class User {
             }
             return (String) highestInterest;
         }else{
-            return "Interests not filled";
+            return null;
         }
     }
 
@@ -91,12 +91,12 @@ public class User {
         if(interestMap.containsKey(storyTitle)){
             if(measure>interestMap.get(storyTitle)) {
                 mDatabase.child("users").child(getUid()).child("interests").child(storyTitle).setValue(measure);
-                Log.d(TAG, "Interest " +storyTitle+ " added with a score of " + measure);
+//                Log.d(TAG, "Interest " +storyTitle+ " added with a score of " + measure);
                 interestMap.put(storyTitle, measure);
             }
         }else{
             mDatabase.child("users").child(getUid()).child("interests").child(storyTitle).setValue(measure);
-            Log.d(TAG, "Interest " +storyTitle+ " added with a score of " + measure);
+//            Log.d(TAG, "Interest " +storyTitle+ " added with a score of " + measure);
             interestMap.put(storyTitle, measure);
         }
     }
