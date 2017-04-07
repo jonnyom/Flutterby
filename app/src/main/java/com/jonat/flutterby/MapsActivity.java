@@ -593,7 +593,6 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
                         public void onCancelled(DatabaseError databaseError) {
                             System.err.println("There was an error " +
                                     "getting the GeoFire location: " + databaseError);
-                            Toast.makeText(MapsActivity.this, "Permission Denied. Please Login again.", Toast.LENGTH_SHORT).show();
                         }
                     });
 
@@ -602,7 +601,6 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 System.err.println("There was an error getting the Firebase data: " + databaseError);
-                Toast.makeText(MapsActivity.this, "Permission Denied. Please Login again.", Toast.LENGTH_SHORT).show();
             }
         });
         return null;
