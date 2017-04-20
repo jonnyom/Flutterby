@@ -40,10 +40,11 @@ public class ProfileActivity extends AppCompatActivity {
         setContentView(R.layout.activity_profile);
 
         FirebaseApp.initializeApp(this);
-        //get firebase auth instance
+
+        // Get firebase auth instance
         auth = FirebaseAuth.getInstance();
 
-        //get current user
+        // Get current user
         final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
         authListener = new FirebaseAuth.AuthStateListener() {
@@ -51,14 +52,15 @@ public class ProfileActivity extends AppCompatActivity {
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user == null) {
-                    // user auth state is changed - user is null
-                    // launch login activity
+                    // The user isn't logged in
+                    // Launch login activity
                     startActivity(new Intent(ProfileActivity.this, LoginActivity.class));
                     finish();
                 }
             }
         };
 
+        // Initialise the various widgets available
         btnBack = (ImageButton) findViewById(R.id.btn_back);
         btnChangeEmail = (Button) findViewById(R.id.change_email_button);
         btnChangePassword = (Button) findViewById(R.id.change_password_button);
@@ -90,6 +92,7 @@ public class ProfileActivity extends AppCompatActivity {
             progressBar.setVisibility(View.GONE);
         }
 
+        // End this activity when the back button is pressed
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -159,7 +162,7 @@ public class ProfileActivity extends AppCompatActivity {
                 progressBar.setVisibility(View.VISIBLE);
                 if (user != null && !newPassword.getText().toString().trim().equals("")) {
                     if (newPassword.getText().toString().trim().length() < 6) {
-                        newPassword.setError("Password too short, enter minimum 6 characters");
+                        newPassword.setError("Password too short, must be a minimum of 6 characters");
                         progressBar.setVisibility(View.GONE);
                     } else {
                         user.updatePassword(newPassword.getText().toString().trim())

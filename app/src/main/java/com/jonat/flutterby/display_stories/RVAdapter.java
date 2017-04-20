@@ -11,10 +11,6 @@ import com.jonat.flutterby.R;
 
 import java.util.ArrayList;
 
-/**
- * Created by jonat on 24/03/2017.
- */
-
 public class RVAdapter extends RecyclerView.Adapter<RVAdapter.PoiViewHolder>{
 
     private ArrayList<String> storyList;

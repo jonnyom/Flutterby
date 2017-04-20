@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Point;
-import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
 import android.os.AsyncTask;
@@ -22,8 +21,6 @@ import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
@@ -90,8 +87,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
 
-import static com.jonat.flutterby.R.id.parent;
-
 
 public class MapsActivity extends FragmentActivity implements
         OnMapReadyCallback,
@@ -105,8 +100,6 @@ public class MapsActivity extends FragmentActivity implements
 
     // Views
     private View mapView;
-    // Widgets
-
 
     // Firebase references
     private Firebase mRef;
@@ -133,6 +126,7 @@ public class MapsActivity extends FragmentActivity implements
     private User user;
     private Recommender recommender;
     private Config config;
+
     // End and start times for measuring interest
     private long endTime;
     private long startTime;
@@ -151,26 +145,33 @@ public class MapsActivity extends FragmentActivity implements
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             checkLocationPermission();
         }
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        // Get the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapView = mapFragment.getView();
-        mapFragment.getMapAsync(this);;
+        mapFragment.getMapAsync(this);
         autocompleteFragment = (PlaceAutocompleteFragment)
                 getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
 
+        // Create a floating button to link to the profile page
         profileButton = (FloatingActionButton) findViewById(R.id.profileButton);
+        // Set a listener for clicks on the button
         profileButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // Start the profile activity
                 startActivity(new Intent(MapsActivity.this, ProfileActivity.class));
                 onPause();
             }
         });
 
+        // Initialise the context for Firebase
         Firebase.setAndroidContext(this);
 
+        // Initialise the search bar widget to give places
         autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+
+            // Jump to location searched
             @Override
             public void onPlaceSelected(Place place) {
                 LatLng location = place.getLatLng();
@@ -180,21 +181,23 @@ public class MapsActivity extends FragmentActivity implements
 
             @Override
             public void onError(Status status) {
-                // TODO: Handle the error.
                 Log.i(TAG, "An error occurred: " + status);
             }
         });
 
+        // Set up the type of autocompletes that are presented to the user. In this case, only addresses
         AutocompleteFilter typeFilter = new AutocompleteFilter.Builder()
                 .setTypeFilter(AutocompleteFilter.TYPE_FILTER_ADDRESS)
                 .build();
         autocompleteFragment.setFilter(typeFilter);
 
-        // threads
+        // Initialise an array list for any threads or AsyncTasks that are created
         threadList = new ArrayList<>();
 
+        // Initialise a map of markers
         markers = new HashMap<>();
 
+        // Find the current user. If the user isn't logged in, launch the LoginActivity
         auth = FirebaseAuth.getInstance();
         if(auth.getCurrentUser() == null){
             startActivity(new Intent(MapsActivity.this, LoginActivity.class));
@@ -213,20 +216,22 @@ public class MapsActivity extends FragmentActivity implements
             }
         };
 
+        // Initialise the user object using the current user's email addres
         user = new User(auth.getCurrentUser().getEmail());
         this.config = new Config();
         recommender = new Recommender(user);
 
         // Firebase ref
         mRef = new Firebase(config.FIREBASE_URL);
+        // Get the database reference
         this.ref = FirebaseDatabase.getInstance().getReference(config.GEO_FIRE_REF);
-        // setup GeoFire
+        // Setup GeoFire using the database reference
         this.geoFire = new GeoFire(ref);
-        // Basic ref
+        // Basic references for the database and storage (image) locations
         this.mDatabase = FirebaseDatabase.getInstance().getReference();
         this.storage = FirebaseStorage.getInstance();
 
-        // Actual Locations
+        // Actual Locations that can be changed from the onCreate method
 //        geoFire.setLocation("POI01/location", new GeoLocation(51.9012121,-8.4645262));
 //        geoFire.setLocation("POI02/location", new GeoLocation(51.8929344,-8.4856053));
 //        geoFire.setLocation("POI03/location", new GeoLocation(51.899388,-8.4749062));
@@ -278,6 +283,7 @@ public class MapsActivity extends FragmentActivity implements
     protected void onStop() {
         super.onStop();
 
+        // When the app stops cancel each of the threads in the threadList
         for(AsyncTask thread: threadList){
             thread.cancel(true);
         }
@@ -304,29 +310,29 @@ public class MapsActivity extends FragmentActivity implements
             Log.e(TAG, "Can't find style. Error: ", e);
         }
         mMap = map;
+
         //Initialize Google Play Services
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // Check the permissions to access fine location have been permitted
             if (ContextCompat.checkSelfPermission(this,
                     Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED) {
                 buildGoogleApiClient();
                 mMap.setMyLocationEnabled(true);
-
             }
         }
         else {
-
             buildGoogleApiClient();
             mMap.setMyLocationEnabled(true);
-
         }
+        // Position the jump to my location button on the bottom right
         if (mapView != null &&
                 mapView.findViewById(Integer.parseInt("1")) != null) {
             // Get the button view
             View locationButton = ((View) mapView.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
             RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)
                     locationButton.getLayoutParams();
-            // position on right bottom
+            // position on bottom right
             layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
             layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
             layoutParams.setMargins(0, 0, 30, 30);
@@ -340,7 +346,9 @@ public class MapsActivity extends FragmentActivity implements
         mLastLng = mLastLocation.getLongitude();
         mLastLat = mLastLocation.getLongitude();
         final LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        // Move the location to the user's location
         mMap.moveCamera( CameraUpdateFactory.newLatLngZoom(latLng , 14.0f) );
+        // Set the autocomplete options to only autocomplete to locations within 500 metres of the user's location
         autocompleteFragment.setBoundsBias(toBounds(latLng, 500));
         callAsyncTask();
         //stop location updates
@@ -357,7 +365,7 @@ public class MapsActivity extends FragmentActivity implements
                                            @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
             case MY_PERMISSIONS_REQUEST_LOCATION: {
-                // If request is cancelled, the result arrays are empty.
+                // If request is cancelled, the resulting arrays will be empty
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
@@ -383,8 +391,9 @@ public class MapsActivity extends FragmentActivity implements
     @Override
     public void onConnected(Bundle bundle) {
         mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(1000);
-        mLocationRequest.setFastestInterval(1000);
+        // Poll the users location every minute
+        mLocationRequest.setInterval(60000);
+        mLocationRequest.setFastestInterval(60000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
@@ -397,19 +406,21 @@ public class MapsActivity extends FragmentActivity implements
     @Override
     public void onConnectionSuspended(int i) {}
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        finish();
+    }
+
     // ********* My Methods *********
     public boolean checkLocationPermission(){
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
 
-            // Asking user if explanation is needed
+            // Ask user if explanation is needed
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.ACCESS_FINE_LOCATION)) {
-
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
 
                 //Prompt the user once explanation has been shown
                 ActivityCompat.requestPermissions(this,
@@ -440,6 +451,7 @@ public class MapsActivity extends FragmentActivity implements
         mGoogleApiClient.connect();
     }
 
+    // Method to handle the AsyncTasks
     protected void callAsyncTask(){
         Timer timer = new Timer();
         final Handler handler = new Handler();
@@ -477,9 +489,11 @@ public class MapsActivity extends FragmentActivity implements
                 });
             }
         };
+        // Schedule the AsyncTasks to poll every minute
         timer.schedule(doAsyncTask, 0, 60000);
     }
 
+    // Inner class to populate the user's interestMap
     private class BackgroundFillUserInterests extends  AsyncTask<Void, Void, Void>{
         @Override
         protected Void doInBackground(Void... voids) {
@@ -489,24 +503,26 @@ public class MapsActivity extends FragmentActivity implements
                 mDatabase.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
+                        // If the user has no interests, populate the map with null
                         if(!dataSnapshot.hasChild("interests")){
                             Log.d(TAG, "Background Fill User Interests: User Does not have a child interests");
                             loadedInterests.put(null, null);
                             user.setInterests(loadedInterests);
-                        }else {
+                        }
+                        // Otherwise fill the map with the data in the database
+                        else {
                             Log.d(TAG, "Background Fill User Interests: isInterestEmpty is not Null");
+                            // For each of the users interest, assign the score and story associated with the score to a hashmap
                             for (DataSnapshot interestSnapshot : dataSnapshot.child("interests").getChildren()) {
                                 String storyTitle = interestSnapshot.getKey();
                                 double storyScore = (double) interestSnapshot.getValue();
                                 float interestScore = (float) storyScore;
                                 Log.d(TAG, "Background Interest Loop: Story title: " + storyTitle);
-                                // Check and ensure the user's interests aren't loaded if they have no interests.
                                 loadedInterests.put(storyTitle, interestScore);
                                 Log.d(TAG, "Genre = " + storyTitle + "; Score = " + interestScore);
                                 user.setInterests(loadedInterests);
                             }
                         }
-                        System.out.println(user.getInterests());
                     }
 
                     @Override
@@ -522,92 +538,98 @@ public class MapsActivity extends FragmentActivity implements
         }
     }
 
-//     Create subclass for Asynchronous Tasks that handle pulling data from Firebase
-private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
+    // Create subclass for Asynchronous Tasks that handle pulling data from Firebase
+    private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
 
-    @Override
-    protected Void doInBackground(Void... voids) {
-        ref.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                long idIncrement = 0;
-                for (final DataSnapshot poiSnapshot : dataSnapshot.getChildren()) {
-
-                    final Map<String, String> genreMap = new HashMap<>();
-                    final String mPoiSnapshot = poiSnapshot.getKey();
-                    final HashMap<String, Story> mapOfStories = new HashMap<>();
-                    final Vector<POIGenre> genreVector = new Vector<>();
-
+        @Override
+        protected Void doInBackground(Void... voids) {
+            ref.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    long idIncrement = 0;
                     // Get POI data from Firebase
-                    final String mPoiTitle = (String) poiSnapshot.child("title").getValue();
+                    for (final DataSnapshot poiSnapshot : dataSnapshot.getChildren()) {
+                        final String mPoiSnapshot = poiSnapshot.getKey();
+                        final HashMap<String, Story> mapOfStories = new HashMap<>();
+                        final Vector<POIGenre> genreVector = new Vector<>();
+                        final String mPoiTitle = (String) poiSnapshot.child("title").getValue();
 
-                    for(final DataSnapshot mPoiStories: poiSnapshot.child("stories").getChildren()){
-                        final String mPoiStoryTitle = (String) mPoiStories.child("storyTitle").getValue();
-                        final String mPoiStoryText = (String) mPoiStories.child("story").getValue();
-                        final HashMap<String, Float> similarities = new HashMap<>();
-                        for (DataSnapshot similaritySnapshot : mPoiStories.child("similarities").getChildren()) {
-                            String document = similaritySnapshot.getKey();
-                            double storedSim = (double) similaritySnapshot.getValue();
-                            float similarity = (float) storedSim;
-                            similarities.put(document, similarity);
-                        }
+                        // Get the Story data for the current POI
+                        for(final DataSnapshot mPoiStories: poiSnapshot.child("stories").getChildren()){
+                            final String mPoiStoryTitle = (String) mPoiStories.child("storyTitle").getValue();
+                            final String mPoiStoryText = (String) mPoiStories.child("story").getValue();
+                            final HashMap<String, Float> similarities = new HashMap<>();
 
-                        final Story story = new Story(mPoiStoryTitle, mPoiStoryText, similarities);
-                        mapOfStories.put(story.getStoryTitle(), story);
-
-                        for(DataSnapshot genreSnapshot: poiSnapshot.child("genre").getChildren()){
-                            final String mPoiStoryGenreId = genreSnapshot.getKey();
-                            final String mPoiStoryGenreType = (String) genreSnapshot.child("genre").getValue();
-                            final POIGenre mPoiGenre = new POIGenre(idIncrement, mPoiStoryGenreType);
-                            genreMap.put(mPoiStoryGenreType, mPoiStoryGenreId);
-                            genreVector.add(mPoiGenre);
-                        }
-                    }
-                    //Query location and place marker on said location
-                    geoFire.getLocation(mPoiSnapshot+"/location", new LocationCallback() {
-                        @Override
-                        public void onLocationResult(String key, GeoLocation location) {
-                            try{
-                                if(location == null){
-                                    Log.d(TAG, "Location is null");
-                                }
-                                // Create poi object with title, story and genre
-                                final Location poiLocation = new Location("POI");
-                                poiLocation.setLatitude(location.latitude);
-                                poiLocation.setLongitude(location.longitude);
-                                final PointOfInterest poi = new PointOfInterest(poiLocation, mPoiTitle, mapOfStories, genreVector);
-                                Log.d(TAG, "Checking Point Of Interest: " + poi.getPOITitle());
-                                float distance = mLastLocation.distanceTo(poiLocation);
-                                if(distance< config.COMPARISON_DISTANCE){
-                                    if (recommender.recommendPoi(poi)) {
-                                        Log.d(TAG, "On Location Result: Point Of Interest " + poi.getPOITitle() + " is recommended");
-                                        displayMarker(new MarkerOptions(), poi);
-                                    }
-                                }
-                            }catch(Exception e){
-                                Log.d(TAG, "Exception raised: " + e);
+                            // Get the similiarities for the current Story
+                            for (DataSnapshot similaritySnapshot : mPoiStories.child("similarities").getChildren()) {
+                                String document = similaritySnapshot.getKey();
+                                double storedSim = (double) similaritySnapshot.getValue();
+                                float similarity = (float) storedSim;
+                                similarities.put(document, similarity);
                             }
 
-                        }
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
-                            System.err.println("There was an error " +
-                                    "getting the GeoFire location: " + databaseError);
-                        }
-                    });
+                            // Create the Story object and place it in mapOfStories
+                            final Story story = new Story(mPoiStoryTitle, mPoiStoryText, similarities);
+                            mapOfStories.put(story.getStoryTitle(), story);
 
+                            // Get the genres for the current Story
+                            for(DataSnapshot genreSnapshot: poiSnapshot.child("genre").getChildren()){
+                                final String mPoiStoryGenreType = (String) genreSnapshot.child("genre").getValue();
+                                final POIGenre mPoiGenre = new POIGenre(idIncrement, mPoiStoryGenreType);
+                                genreVector.add(mPoiGenre);
+                            }
+                        }
+
+                        //Query location of the current POI and place marker on said location
+                        geoFire.getLocation(mPoiSnapshot+"/location", new LocationCallback() {
+                            @Override
+                            public void onLocationResult(String key, GeoLocation location) {
+                                try{
+                                    if(location == null){
+                                        Log.d(TAG, "Location is null");
+                                    }
+                                    // Create poi object with title, story and genre
+                                    final Location poiLocation = new Location("POI");
+                                    poiLocation.setLatitude(location.latitude);
+                                    poiLocation.setLongitude(location.longitude);
+                                    final PointOfInterest poi = new PointOfInterest(poiLocation, mPoiTitle, mapOfStories, genreVector);
+                                    Log.d(TAG, "Checking Point Of Interest: " + poi.getPOITitle());
+                                    float distanceToUser = mLastLocation.distanceTo(poiLocation);
+
+                                    // Ensure the POI is within range of the user
+                                    if(distanceToUser< config.COMPARISON_DISTANCE){
+                                        // Find out if the POI should be recommended to the user
+                                        if (recommender.recommendPoi(poi)) {
+                                            Log.d(TAG, "On Location Result: Point Of Interest " + poi.getPOITitle() + " is recommended");
+                                            // Display the POI
+                                            displayMarker(new MarkerOptions(), poi);
+                                        }
+                                    }
+                                }catch(Exception e){
+                                    Log.d(TAG, "Exception raised: " + e);
+                                }
+
+                            }
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+                                System.err.println("There was an error " +
+                                        "getting the GeoFire location: " + databaseError);
+                            }
+                        });
+                    }
                 }
-            }
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                System.err.println("There was an error getting the Firebase data: " + databaseError);
-            }
-        });
-        return null;
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    System.err.println("There was an error getting the Firebase data: " + databaseError);
+                }
+            });
+            return null;
+        }
     }
-}
 
+    // method used to display markers as they are populated with data
     public void displayMarker(MarkerOptions options, PointOfInterest poi) {
+        // Remove the marker that is already on the map and replace the data
         if(markers!=null){
             Log.d(TAG, "Display Marker: Markers map is not null");
             if(markers.get(poi.getPOITitle())!=null){
@@ -619,9 +641,11 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
         LatLng poiLatLng = new LatLng(poiLocation.getLatitude(), poiLocation.getLongitude());
         HashMap<String, Story> mPoiStories = poi.getPOIStories();
 
+        // Find the recommended story for the user
         Story recommendedStory = recommender.recommendStory(mPoiStories);
         String storyText = recommendedStory.getStory();
 
+        // Create a PoiTag object that takes the POI and the recommendedStory to send to the popupWindow
         PoiTag poiTag = new PoiTag(poi, recommendedStory);
         Marker marker = mMap.addMarker(options.position(poiLatLng)
                 .title(poi.getPOITitle())
@@ -632,21 +656,23 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
 
         markers.put(poi.getPOITitle(), marker);
 
-            mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-                @Override
-                public boolean onMarkerClick(Marker marker) {
-                    if (!marker.isInfoWindowShown()) {
-                        startTime = System.currentTimeMillis();
-                        recommender.setStartTime(startTime);
-                        Log.d(TAG, "On Marker Click: Marker clicked");
-                        showPopup(marker);
-                        Log.d(TAG, "On Marker Click: showPopup called successfully");
-                    }
-                    return true;
+        // Set an onClickListener for the marker that starts measuring the user's interest
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                if (!marker.isInfoWindowShown()) {
+                    startTime = System.currentTimeMillis();
+                    recommender.setStartTime(startTime);
+                    Log.d(TAG, "On Marker Click: Marker clicked");
+                    showPopup(marker);
+                    Log.d(TAG, "On Marker Click: showPopup called successfully");
                 }
-            });
+                return true;
+            }
+        });
     }
 
+    // Display the popupWindow to the user
     public void showPopup(final Marker marker) {
         Log.d(TAG, "Show Popup: Called");
         View popupView = getLayoutInflater().inflate(R.layout.fragment_story, null);
@@ -654,8 +680,10 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
         PopupWindow popupWindow = new PopupWindow(popupView,
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
+        // Get the PoiTag object that contains the POI and recommended story.
         final PoiTag poiTag = (PoiTag) marker.getTag();
         final PointOfInterest poi = poiTag.getPoi();
+        // Get each of the stories contained within the POI to allow the user to see them all
         HashMap<String, Story> storyMap = poi.getPOIStories();
         final ArrayList<String> stories = new ArrayList<>();
         for(String story: storyMap.keySet()){
@@ -685,6 +713,8 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
 
         title.setText(titleText);
         story.setText(storyText);
+
+        // Find the image associated with the POI's title
         Glide.with(this)
                 .using(new FirebaseImageLoader())
                 .load(imageRef)
@@ -709,6 +739,7 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
             if (mMap.getProjection().getVisibleRegion().latLngBounds.contains(marker.getPosition())) {
                 if (!popupWindow.isShowing()) {
                     popupWindow.showAtLocation(popupView, Gravity.NO_GRAVITY, 0, 0);
+                    // In the background remove any markers and recall callAsyncTask to update the UI
                     if(markers!=null) {
                         for (String markerPoi : markers.keySet()) {
                             markers.get(markerPoi).remove();
@@ -723,6 +754,7 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
             }
         }
 
+        // When the popupWindow is dismissed stop measuring the user's interest and send the scores to the database
         popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
 
             @Override
@@ -750,9 +782,5 @@ private class BackgroundPointOfInterest extends AsyncTask<Void, Void, Void> {
         return new LatLngBounds(southwest, northeast);
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        finish();
-    }
+
 }

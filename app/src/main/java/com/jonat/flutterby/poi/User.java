@@ -51,6 +51,7 @@ public class User {
         return interestMap;
     }
 
+    // Method to find the user's highest scoring interest
     public String getHighestInterest(){
         if(!interestsNotFilled()) {
             Object highestInterest = interestMap.keySet().toArray()[0];
@@ -75,6 +76,7 @@ public class User {
         return noStoredInterest;
     }
 
+    // Set the user's interestMap
     public void setInterests(Map<String, Float> interestMap){
         if(interestsNotFilled()){
             noStoredInterests();
@@ -83,6 +85,7 @@ public class User {
         System.out.println(interestMap);
     }
 
+    // Method to place the user's scores in the database
     public void pushData(String storyTitle, float measure) {
         mDatabase = FirebaseDatabase.getInstance().getReference();
         if(interestMap.containsKey(null)){
@@ -91,12 +94,12 @@ public class User {
         if(interestMap.containsKey(storyTitle)){
             if(measure>interestMap.get(storyTitle)) {
                 mDatabase.child("users").child(getUid()).child("interests").child(storyTitle).setValue(measure);
-//                Log.d(TAG, "Interest " +storyTitle+ " added with a score of " + measure);
+                Log.d(TAG, "Interest " +storyTitle+ " added with a score of " + measure);
                 interestMap.put(storyTitle, measure);
             }
         }else{
             mDatabase.child("users").child(getUid()).child("interests").child(storyTitle).setValue(measure);
-//            Log.d(TAG, "Interest " +storyTitle+ " added with a score of " + measure);
+            Log.d(TAG, "Interest " +storyTitle+ " added with a score of " + measure);
             interestMap.put(storyTitle, measure);
         }
     }

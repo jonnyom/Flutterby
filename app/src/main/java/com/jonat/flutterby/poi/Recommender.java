@@ -1,7 +1,5 @@
 package com.jonat.flutterby.poi;
 
-import android.nfc.Tag;
-import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.jonat.flutterby.config.Config;
@@ -37,7 +35,7 @@ public class Recommender {
         return endTime;
     }
 
-    // normalise instead of if combine length + fog index
+    // Method to calculate how long should be given for a story before the system should disregard the interest
     public boolean shouldRecommendTimer(String story){
         config = new Config();
         FogIndex fogIndex = new FogIndex(story);
@@ -73,10 +71,9 @@ public class Recommender {
         return returnVal;
     }
 
-    // Method that takes a map and iterates through them, finding the most suitable point of interest to show to the user
+    // Method that takes a POI and assesses if it would be relevant to the user's interest
     public boolean recommendPoi(PointOfInterest poi){
         boolean shouldRecommend = false;
-
         if(user.getInterests().containsKey(null) || user.getInterests().isEmpty()){
             Log.d(TAG, "Recommend POI: User has no interests, should recommend");
             return true;
@@ -120,6 +117,7 @@ public class Recommender {
         }else if(stories.size() > 1){
             Log.d(TAG, "Recommend Story: Point of Interest has multiple stories");
             Log.d(TAG, "Recommend Story: Calling Multiple Story Recommender");
+            // This line is how the evaluation was carried out. Instead of intelligently choosing relevant stories, random stories were chosen
             recommendedStory = multipleStoryRecommender(stories);
 //            recommendedStory = stories.get(getRandomStory(stories));
             if(recommendedStory != null){
@@ -135,6 +133,7 @@ public class Recommender {
         return recommendedStory;
     }
 
+    // Method to find the most relevant story to present to the user
     private Story multipleStoryRecommender(HashMap<String, Story> stories){
         if(stories == null || stories.isEmpty()){
             Log.d(TAG, "Multiple Story Recommender: Stories map is null or empty");
@@ -158,7 +157,7 @@ public class Recommender {
                 }
             }
         }else {
-            Log.d(TAG, "Multiple Story Recommnder: User's interests are filled");
+            Log.d(TAG, "Multiple Story Recommender: User's interests are filled");
             String highestInterest = user.getHighestInterest();
             if(highestInterest == null){
                 Log.d(TAG, "Highest interest is null");
@@ -195,6 +194,7 @@ public class Recommender {
         return recommendedStory;
     }
 
+    // Method to find a random story to present to the user
     private Object getRandomStory(HashMap<String, Story> stories){
         Log.d(TAG, "Get Random Story: Getting Random story. Converting keyset to array");
         int randomInx = (int) (Math.random() * stories.size());

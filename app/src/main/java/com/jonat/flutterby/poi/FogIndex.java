@@ -1,6 +1,5 @@
 package com.jonat.flutterby.poi;
 
-import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,6 +40,8 @@ public class FogIndex {
         return percentHardWords;
     }
 
+    // Method to find the number of hard words in the document
+    // - Syllables longer than 3 that aren't nouns (uppercase words) or hyphenated
     public void setPercentHardWords(){
         int count = 0;
         for(String word: story.split(" ")){
@@ -53,6 +54,7 @@ public class FogIndex {
         percentHardWords = count/wordCount;
     }
 
+    // Method to count the number of words in the document
     public void setWordCount(){
         int count = 0;
         String[] storyArray = story.split(" ");
@@ -62,6 +64,7 @@ public class FogIndex {
         wordCount = count;
     }
 
+    // Method to count the syllables in a word
     protected int countSyllables(String word)
     {
         int count = 0;
@@ -84,6 +87,7 @@ public class FogIndex {
         return count;
     }
 
+    // Method to count any substring from a syllable
     private int count(String word) {
         int count = 0;
         Pattern splitter = Pattern.compile("[^aeiouy]*[aeiouy]+");
@@ -95,6 +99,7 @@ public class FogIndex {
         return count;
     }
 
+    // Method to calculate if the word contains a slient E
     private boolean silentE(String word) {
         word = word.substring(0, word.length()-1);
 
@@ -107,7 +112,8 @@ public class FogIndex {
             return false;
     }
 
-    public void setFogIndex(){
+    // Method to create the Fog Index
+    private void setFogIndex(){
         fogIndex = (float) (0.4*(averageSentenceLength + percentHardWords));
     }
 
@@ -115,6 +121,7 @@ public class FogIndex {
         return fogIndex;
     }
 
+    // Constructor to create Fog Index by initialising each of the methods
     public FogIndex(String story){
         this.story = story;
         setWordCount();
